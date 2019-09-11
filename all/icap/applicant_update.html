@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load account %}
+
+{% block collapse %}
+{% endblock %}
+
+{% block extrahead %}
+<style>
+label {
+    font-weight: bolder;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% load tags %}
+{% block apply %}
+<div class="card mt-2 ml-2">
+{% if user.is_authenticated %}
+ {% if request.user == applicant.author %}
+  <form class="needs-validation" id="applicant_form" method="POST" enctype="multipart/form-data" action="{% url 'applicant_update' %}" novalidate>
+    {% csrf_token %}
+  <h5 class="card-header">
+    Editing applicant information
+    <input class="btn btn-sm btn-primary float-right pb-1" type="submit" value="Save form">
+  </h5>
+  <div class="row mt-1 ml-1 mr-1 mb-1">
+    <div class="col-sm-6 p-1">
+      <div class="card bg-warning">
+        <div class="card-body">
+          <div class="row">
+              {{ form.non_field_errors }}
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.firstname.errors }}
+              {{ form.firstname.label_tag }}
+              {{ form.firstname }}
+              <span class="helptext">{{ form.firstname.help_text }}</span>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.lastname.errors }}
+              {{ form.lastname.label_tag }}
+              {{ form.lastname }}
+              <span class="helptext">{{ form.lastname.help_text }}</span>
+            </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.category.errors }}
+              {{ form.category.label_tag }}
+              {{ form.category }}
+              <span class="helptext">{{ form.category.help_text }}</span>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.area.errors }}
+              {{ form.area.label_tag }}
+              {{ form.area }}
+              <span class="helptext">{{ form.area.help_text }}</span>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.host_agency.errors }}
+              {{ form.host_agency.label_tag }}
+              {{ form.host_agency }}
+              <span class="helptext">{{ form.host_agency.help_text }}</span>
+            </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.city.errors }}
+              {{ form.city.label_tag }}
+              {{ form.city }}
+              <span class="helptext">{{ form.city.help_text }}</span>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.state.errors }}
+              {{ form.state.label_tag }}
+              {{ form.state }}
+              <span class="helptext">{{ form.state.help_text }}</span>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.dispatch_office.errors }}
+              {{ form.dispatch_office.label_tag }}
+              {{ form.dispatch_office }}
+              <span class="helptext">{{ form.dispatch_office.help_text }}</span>
+            </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.work.errors }}
+              {{ form.work.label_tag }}
+              {{ form.work }}
+              <span class="helptext">{{ form.work.help_text }}</span>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.home.errors }}
+              {{ form.home.label_tag }}
+              {{ form.home }}
+              <span class="helptext">{{ form.home.help_text }}</span>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.cell.errors }}
+              {{ form.cell.label_tag }}
+              {{ form.cell }}
+              <span class="helptext">{{ form.cell.help_text }}</span>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.iqcs.errors }}
+              {{ form.iqcs.label_tag }}
+              {{ form.iqcs }}
+              <span class="helptext">{{ form.iqcs.help_text }}</span>
+            </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.qualifications.errors }}
+              {{ form.qualifications.label_tag }}
+              {{ form.qualifications }}
+              <span class="helptext">{{ form.qualifications.help_text }}</span>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.remarks.errors }}
+              {{ form.remarks.label_tag }}
+              {{ form.remarks }}
+              <span class="helptext">{{ form.remarks.help_text }}</span>
+            </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.supervisor_name.errors }}
+              {{ form.supervisor_name.label_tag }}
+              {{ form.supervisor_name }}
+              <span class="helptext">{{ form.supervisor_name.help_text }}</span>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.supervisor_email.errors }}
+              {{ form.supervisor_email.label_tag }}
+              {{ form.supervisor_email }}
+              <span class="helptext">{{ form.supervisor_email.help_text }}</span>
+            </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.admin_name.errors }}
+              {{ form.admin_name.label_tag }}
+              {{ form.admin_name }}
+              <span class="helptext">{{ form.admin_name.help_text }}</span>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.admin_email.errors }}
+              {{ form.admin_email.label_tag }}
+              {{ form.admin_email }}
+              <span class="helptext">{{ form.admin_email.help_text }}</span>
+            </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.training_name.errors }}
+              {{ form.training_name.label_tag }}
+              {{ form.training_name }}
+              <span class="helptext">{{ form.training_name.help_text }}</span>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              {{ form.training_email.errors }}
+              {{ form.training_email.label_tag }}
+              {{ form.training_email }}
+              <span class="helptext">{{ form.training_email.help_text }}</span>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+
+    <div class="col-sm-6 p-1">
+      <div class="card bg-warning">
+        <div class="card-body">
+          <table class="table table-sm p-0">
+            <tbody>
+                  {{ fileformset.management_form }}
+                  {{ fileformset.non_form_errors.as_ul }}
+                  {% for form in fileformset.forms %}
+                    {% if forloop.first %}
+                      {% for field in form.visible_fields %}
+                      <th>{{ field.label|lower }}</th>
+                      {% endfor %}
+                    {% endif %}
+                    <tr class="{% cycle row1 row2 %}">
+                    {% for field in form.visible_fields %}
+                      <td class="p-0{% if field.label|lower == 'delete' %} float-right{% endif %}">
+                      {% if forloop.first %}
+                        {% for hidden in form.hidden_fields %}
+                        {{ hidden }}
+                        {% endfor %}
+                      {% endif %}
+                        {{ field.errors.as_ul }}
+                        {% if field.name == 'afile' and field.value != None %}
+                        <a href='/u/{{ field.value }}'>{{ field.value.name|slice:":-41" }}{{ field.value.name|ext }}</a>
+                        {% elif field.name == 'afile' and field.value == None %}
+                        {{ field }}
+                        {% else %}
+                        {{ field }}
+                        {% endif %}
+                      </td>
+                    {% endfor %}
+                    </tr>
+                  {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    </div>
+  </form>
+ {% else %}
+   CAN'T EDIT THIS APPLICANT
+ {% endif %}
+{% endif %}
+</div>
+{% endblock %}
+
+{% endblock %}
+
+{% block endscripts %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  <script>
+(function() {
+  'use strict';
+  window.addEventListener('load', function() {
+    var forms = document.getElementsByClassName('needs-validation');
+    var validation = Array.prototype.filter.call(forms, function(form) {
+      form.addEventListener('submit', function(event) {
+        if (form.checkValidity() === false) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+    });
+  }, false);
+})();
+</script>
+<script>
+    $('textarea').each(function () {
+      this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;');
+    }).on('input', function () {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+</script>
+{% endblock %}

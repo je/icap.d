@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load account %}
+
+{% block collapse %}
+{% endblock %}
+
+{% block extrahead %}
+<style>
+label {
+    font-weight: bolder;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% if user.is_authenticated and perms.icap.add_application_status %}
+<div class="card mt-2 ml-2">
+<form class="needs-validation" id="positionstatus_form" method="POST" enctype="multipart/form-data" action="{% url 'position_detail' position.team.area.slug position.team.slug position.slug %}" novalidate>
+    {% csrf_token %}
+  <h5 class="card-header">
+    <a href="{% url 'area_detail' position.team.area.slug %}">{{ position.team.area }}</a> <a href="{% url 'team_detail' position.team.area.slug position.team.slug %}">{{ position.team }}</a> {{ position }}
+    <span class="float-right small">
+    Open from <input type="date" name="open" value="{{ position.open_date|date:"Y-m-d" }}" class="pb-1 mr-1" maxlength="10" id="id_open"> to 
+    <input type="date" name="close" value="{{ position.close_date|date:"Y-m-d" }}" class="pb-1 mr-1" maxlength="10" id="id_close">
+    <input class="btn btn-sm btn-primary float-right pb-1" type="submit" name="positionstatus" value="Save form">
+    </span>
+  </h5>
+</form>
+
+<div class="card-body p-2">
+<table class="table table-bordered table-sm mb-0">
+<form class="needs-validation" id="applications_form" method="POST" enctype="multipart/form-data" action="{% url 'position_detail' position.team.area.slug position.team.slug position.slug %}" novalidate>
+  {% csrf_token %}
+  <thead>
+    <tr>
+      <th scope="col">Applicant Name</th>
+      <th scope="col">Applicant Email</th>
+      <th scope="col">Consideration</th>
+      <th scope="col">Application Status
+        <input class="btn btn-sm btn-primary float-right ml-1 pb-1" type="submit" name="applications" value="Save all below">
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+{% for a in position_applications %}
+    <tr>
+      <td><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.lastname|default_if_none:'--' }} {{ a.applicant.firstname|default_if_none:'--' }}</a></td>
+      <td><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.author.email }}</a></td>
+      <td>{{ a.get_consideration_display }}</td>
+    <td class="form-inline">
+      <div class="col pl-0 pr-0">
+      <div class="input-group input-group-sm">
+      <input type="hidden" name="application_{{ a.id }}" readonly value="{{ a.id }}">
+      <select name="application_status_{{ a.id }}" class="form-control form-control-sm" id="id_application_status_{{ a.id }}">
+        <option value=""{% if a.status == '' %} selected{% endif %}>--</option>
+        <option value="P"{% if a.status == 'P' %} selected{% endif %}">PRIMARY</option>
+        <option value="S"{% if a.status == 'S' %} selected{% endif %}>SHARED</option>
+        <option value="A"{% if a.status == 'A' %} selected{% endif %}>ALTERNATE</option>
+        <option value="T"{% if a.status == 'T' %} selected{% endif %}>TRAINEE</option>
+        <option value="R"{% if a.status == 'R' %} selected{% endif %}>REJECTED</option>
+        <option value="W"{% if a.status == 'W' %} selected{% endif %}>WITHDRAWN</option>
+      </select>
+      <span class="input-group-btn">
+       <input class="btn btn-sm btn-primary ml-1 pb-1" type="submit" name="application_{{ a.id }}" value="Save">
+      </span>
+      </div>
+      </div>
+    </td>
+    </tr>
+{% endfor %}
+  </tbody>
+</form>
+</table>
+</div>
+</div>
+{% else %}
+
+{% if user.is_authenticated and user.is_applied %}
+ EDIT FORM
+ {% else %}
+
+<div class="card">
+<form class="needs-validation"id="application_form" method="POST" enctype="multipart/form-data" action="{% url 'position_detail' position.team.area.slug position.team.slug position.slug %}" novalidate>
+    {% csrf_token %}
+  <h5 class="card-header">
+    <a href="{% url 'area_detail' position.team.area.slug %}">{{ position.team.area }}</a> <a href="{% url 'team_detail' position.team.area.slug position.team.slug %}">{{ position.team }}</a> {{ position }}
+    <span class="float-right small">
+    {% if position.open_date and position.close_date %}
+    {% now "Y-m-d" as todays_date %}
+    {% if position.open_date|date:"Y-m-d" <= todays_date and position.close_date|date:"Y-m-d" >= todays_date %}
+    <span class='text-success'>
+    {% else %}
+    <span class='text-danger'>
+    {% endif %}
+    Open from {{ position.open_date|date:"Y-m-d" }} to {{ position.close_date|date:"Y-m-d" }}
+    {% else %}
+    {% endif %}
+    {% if position.open_date|date:"Y-m-d" <= todays_date and position.close_date|date:"Y-m-d" >= todays_date %}
+    <input class="btn btn-sm btn-primary float-right ml-1 pb-1" type="submit" value="Save form">
+    {% endif %}
+    </span>
+  </h5>
+
+      <div class="col-sm p-1">
+      <div class="card bg-warning">
+        <div class="card-body">
+      <div class="card-body">
+        {{ form.non_field_errors }}
+      <div class="row">
+        <div class="col-sm">
+        <div class="fieldWrapper">
+          {{ form.consideration.errors }}
+          {{ form.consideration.label_tag }}
+          {{ form.consideration }}
+          <span class="helptext">{{ form.consideration.help_text }}</span>
+        </div>
+        </div>
+        <div class="col-sm">
+        <div class="fieldWrapper">
+          {{ form.approved_supervisor.errors }}
+          {{ form.approved_supervisor.label_tag }}
+          {{ form.approved_supervisor }}
+          <span class="helptext">{{ form.approved_supervisor.help_text }}</span>
+        </div>
+        </div>
+        <div class="col-sm">
+        <div class="fieldWrapper">
+          {{ form.approved_admin.errors }}
+          {{ form.approved_admin.label_tag }}
+          {{ form.approved_admin }}
+          <span class="helptext">{{ form.approved_admin.help_text }}</span>
+        </div>
+        </div>
+        <div class="col-sm">
+        <div class="fieldWrapper">
+          {{ form.approved_training.errors }}
+          {{ form.approved_training.label_tag }}
+          {{ form.approved_training }}
+          <span class="helptext">{{ form.approved_training.help_text }}</span>
+        </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm">
+        <div class="fieldWrapper">
+          {{ form.qualifications.errors }}
+          {{ form.qualifications.label_tag }}
+          {{ form.qualifications }}
+          <span class="helptext">{{ form.qualifications.help_text }}</span>
+        </div>
+        </div>
+        <div class="col-sm">
+        <div class="fieldWrapper">
+          {{ form.remarks.errors }}
+          {{ form.remarks.label_tag }}
+          {{ form.remarks }}
+          <span class="helptext">{{ form.remarks.help_text }}</span>
+        </div>
+        </div>
+      </div>
+      {% if position.buying_team %}
+      <div class="row">
+        <div class="col-sm">
+        <div class="fieldWrapper">
+          {{ form.buy_warrant.errors }}
+          {{ form.buy_warrant.label_tag }}
+          {{ form.buy_warrant }}
+          <span class="helptext">{{ form.buy_warrant.help_text }}</span>
+        </div>
+        </div>
+        <div class="col-sm">
+        <div class="fieldWrapper">
+          {{ form.buy_po.errors }}
+          {{ form.buy_po.label_tag }}
+          {{ form.buy_po }}
+          <span class="helptext">{{ form.buy_po.help_text }}</span>
+        </div>
+        </div>
+      </div>
+      {% endif %}
+      </div>
+      </div>
+      </div>
+    </div>
+  </form>
+{% endif %}
+{% endif %}
+</div>
+</div>
+
+{% endblock %}
+
+{% block endscripts %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  <script>
+(function() {
+  'use strict';
+  window.addEventListener('load', function() {
+    var forms = document.getElementsByClassName('needs-validation');
+    var validation = Array.prototype.filter.call(forms, function(form) {
+      form.addEventListener('submit', function(event) {
+        if (form.checkValidity() === false) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+    });
+  }, false);
+})();
+</script>
+<script>
+    $('textarea').each(function () {
+      this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;');
+    }).on('input', function () {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+</script>
+{% endblock %}

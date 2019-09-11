@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load account %}
+
+{% block collapse %}
+{% endblock %}
+
+{% block content %}
+{% load tags %}
+{% if user.is_authenticated and perms.icap.add_application_status or user.email == auser.email %}
+<div class="card mb-2 mt-2 ml-2">
+<h5 class="card-header">
+Applications for '{{ auser.email }}'
+</h5>
+{% if user.is_authenticated and perms.icap.add_application_status %}
+<div class="card-body p-2">
+<table class="table table-bordered table-sm mb-0">
+  <thead>
+    <tr>
+      <th scope="col">Area</th>
+      <th scope="col">Team</th>
+      <th scope="col">Position</th>
+      <th scope="col">Consideration</th>
+      <th scope="col">Application Status</th>
+    </tr>
+  </thead>
+  <tbody>
+{% for a in applicant_applications %}
+    <tr>
+      <td><a href="{% url 'area_detail' a.position.team.area.slug %}">{{ a.position.team.area }}</a></td>
+      <td><a href="{% url 'team_detail' a.position.team.area.slug a.position.team.slug %}">{{ a.position.team }}</a></td>
+      <td><a href="{% url 'position_detail' a.position.team.area.slug a.position.team.slug a.position.slug %}">{{ a.position }}</a></td>
+      <td>{{ a.get_consideration_display }}</td>
+      <td>{{ a.get_application_status_display }}</td>
+    </tr>
+{% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+{% endif %}
+
+{% block apply %}
+{% if user.is_authenticated and request.user == auser %}
+<div class="card-body p-2">
+<table class="table table-bordered table-sm mb-0">
+  <thead>
+    <tr>
+      <th scope="col">Area</th>
+      <th scope="col">Team</th>
+      <th scope="col">Position</th>
+      <th scope="col">Consideration</th>
+      <th scope="col">Application Status</th>
+    </tr>
+  </thead>
+  <tbody>
+{% for a in applicant_applications %}
+    <tr>
+      <td><a href="{% url 'area_detail' a.position.team.area.slug %}">{{ a.position.team.area }}</a></td>
+      <td><a href="{% url 'team_detail' a.position.team.area.slug a.position.team.slug %}">{{ a.position.team }}</a></td>
+      <td><a href="{% url 'position_detail' a.position.team.area.slug a.position.team.slug a.position.slug %}">{{ a.position }}</a></td>
+      <td>{{ a.get_consideration_display }}</td>
+      <td>{{ a.get_application_status_display }}</td>
+    </tr>
+{% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}
+
+<div class="card mt-2 ml-2">
+  <h5 class="card-header">
+    Applicant information for '{{ auser.email }}'
+  </h5>
+  <div class="row mt-1 ml-1 mr-1 mb-1">
+    <div class="col-sm-6 p-1">
+      <div class="card bg-warning">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>firstname:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.firstname }}" readonly>
+              <span class="helptext">{{ applicant.firstname.help_text }}</span>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>lastname:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.lastname }}" readonly>
+            </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>category:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.category }}" readonly>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>area:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.area }}" readonly>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>host agency:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.host_agency }}" readonly>
+            </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>city:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.city }}" readonly>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>state:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.state }}" readonly>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>dispatch office:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.dispatch_office }}" readonly>
+            </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>work:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.work }}" readonly>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>home:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.home }}" readonly>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>cell:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.cell }}" readonly>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>iqcs:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.iqcs }}" readonly>
+            </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>qualifications:</strong>
+              <textarea class="form-control form-control-sm" type="text" readonly>{{ applicant.qualifications }}</textarea>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>remarks:</strong>
+              <textarea class="form-control form-control-sm" type="text" readonly>{{ applicant.remarks }}</textarea>
+            </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>supervisor name:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.supervisor_name }}" readonly>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>supervisor email:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.supervisor_email }}" readonly>
+            </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>admin name:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.admin_name }}" readonly>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>admin email:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.admin_email }}" readonly>
+            </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>training name:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.training_name }}" readonly>
+            </div>
+            </div>
+            <div class="col-sm">
+            <div class="fieldWrapper">
+              <strong>training email:</strong>
+              <input class="form-control form-control-sm" type="text" value="{{ applicant.training_email }}" readonly>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+
+    <div class="col-sm-6 p-1">
+      <div class="card bg-warning">
+        <div class="card-body">
+          <table class="table table-sm p-0">
+            <tbody>
+                  <th>file upload</th>
+                  <th>tags</th>
+                  {% for f in applicant.files.all %}
+                    <tr class="{% cycle row1 row2 %}">
+                      <td class="p-0"><a href='/u/{{ f.afile }}'>{{ f.afile.name|slice:":-41" }}{{ f.afile.name|ext }}</a></td>
+                      <td class="p-0">
+                        <ul class="list-inline mb-0">
+                          {% for tag in f.tags.all %}
+                              <li class="list-inline-item">{{ tag.name }}</li>
+                          {% endfor %}
+                        </ul>
+                      </td>
+                    </tr>
+                  {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+{% else %}
+PERMISSION DENIED
+{% endif %}
+
+{% endblock %}
+
+{% block endscripts %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script>
+    $('textarea').each(function () {
+      this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;');
+    }).on('input', function () {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+  {% block favico %} 
+  <link rel="shortcut icon" type="image/x-icon" href="/s/favicon.ico" />
+  {% endblock %}
+
+  {% block title %}
+    <title>{{ request.site.name }}</title>
+  {% endblock %}
+
+  {% block maincss %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="shortcut icon" type="image/x-icon" href="/s/favicon.ico" />
+    <!--[if lt IE 9]>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  {% endblock %}
+
+  {% block extrahead %}
+  {% endblock %}
+
+  </head>
+
+  {% block load %}
+  <body>
+  {% endblock %}
+
+    <div id="wrap">
+
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <a class="navbar-brand py-0" style="color:white;" href="/" id="intro-btn"><strong><img src="/s/usfslogo.png" width="20" height="20"> {{ request.site.name }}</strong></a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#topnav" aria-controls="topnav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="topnav">
+    <ul class="navbar-nav mr-auto my-2 my-md-0">
+    </ul>
+      {% block login %}
+      <span class="pull-right py-0">
+      {% if user.is_authenticated %}
+      <div class="nav-item dropdown">
+          <a class="dropdown-toggle btn btn-outline-light py-0" href="#" id="user" data-toggle="dropdown"><strong>{{ user.email }}</strong></a>
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="user">
+          <a class="dropdown-item" href="{% url 'applicant_update' %}"><strong>Edit applicant info</strong></a>
+          <a class="dropdown-item" href="{% url 'applicant_detail' request.user.email %}"><strong>View application history</strong></a>
+          <a class="dropdown-item" href="{% url 'account_change_password' %}"><strong>Change password</strong></a>
+          <a class="dropdown-item" href="{% url 'account_logout' %}"><strong>Logout</strong></a>
+        </div>
+      </div>
+      {% else %}
+       <a class="btn btn-outline-light py-0" href="{% url 'account_login' %}"><strong>Login</strong></a>
+      {% endif %}
+      </span>
+      {% endblock %}
+  </div>
+</nav>
+
+        {% block messages %}
+        {% if messages %}
+          {% for message in messages %}
+          <div class="alert{% if message.tags %} alert-{{ message.tags }}{% endif %} m-2 pt-0 pb-1">
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+          {% if message.tags %}<strong>{{ message.tags|title }}:</strong> {% endif %}{{ message|safe }}
+          </div>
+          {% endfor %}
+        {% endif %}
+        {% endblock %}
+
+      <div class="container-fluid pl-0 pr-2">
+
+        {% block pagetitle %}
+        {% if flatpage.title %}<h4>{{ flatpage.title }}</h4>{% endif %}
+        {% endblock %}
+
+        {% block content %}
+        {% load humanize %}
+        {% load tags %}
+        <div class="page-content" style="">
+        {{ flatpage.content|md|safe }}
+        </div>
+        {% endblock %}
+      </div>
+    </div>
+
+    <footer class="footer" id="footer">
+    <div class="container-fluid pl-0 pr-2">
+    <p>
+    </p>
+    <h4 class="card-title"><small></small>
+    </h4>
+    <p></p>
+    </div>
+    </footer>
+
+
+{% block endscripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+{% endblock %}
+
+  </body>
+</html>

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load account %}
+
+{% block collapse %}
+{% endblock %}
+
+{% block content %}
+<h4>All Areas</h4>
+
+<div class="card">
+<table class="table table-bordered table-sm">
+  <thead>
+    <tr>
+      <th scope="col">Area</th>
+      <th scope="col">Application Period</th>
+    </tr>
+  </thead>
+  <tbody>
+{% for a in areas %}
+    <tr>
+      <td><a href="{% url 'area_detail' a.slug %}">{{ a.name }}</a></td>
+      <td>{{ a.open_date }}-{{ a.close_date }}</td>
+    </tr>
+{% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

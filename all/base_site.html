@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ request.site.name }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="/">{{ request.site.name }}</a></h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load account %}
+
+{% block collapse %}
+{% endblock %}
+
+{% block content %}
+<div class="card mt-2 ml-2">
+<h5 class="card-header">{{ area }}</h5>
+<div class="card-body p-2">
+<table class="table table-bordered table-sm mb-0">
+  <thead>
+    <tr>
+      <th scope="col">Team</th>
+      <th scope="col">Application Period</th>
+    </tr>
+  </thead>
+  <tbody>
+{% for t in area_teams %}
+    <tr>
+      <td><a href="{% url 'team_detail' t.area.slug t.slug %}">{{ t.name }}</a></td>
+      <td>{% if t.open_date and t.close_date %}{{ t.open_date|date:"Y-m-d" }} to {{ t.close_date|date:"Y-m-d" }}{% endif %}</td>
+      </tr>
+{% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+{% endblock %}
