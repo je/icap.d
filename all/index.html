@@ -7,24 +7,49 @@
 {% endblock %}
 
 {% block content %}
-<h4>All Areas</h4>
 
-<div class="card">
-<table class="table table-bordered table-sm">
+<div class="row">
+
+<div class='col-4 pl-5 pt-4'>
+  <div class=''>
+  <h6><strong>Background</strong></h6>
+  </div>
+  <div class=''>
+      The Incident Command Application was developed to facilitate Incident Management Teams in recruiting for and filling team positions. These positions are only for temporary assignments during an incident.<br/>
+      <br/>
+      All positions listed follow National Wildfire Coordination Group (NWCG) standard positions found in PMS 310-1 Wildland Fire Qualification System Guide. In order to apply to any position you must meet the qualifications and training as outlined in the 310-1 and be certified through your respective agency.<br/>
+      <br>
+      <div class="alert alert-info">
+      If you need to <strong>apply to an incident management team position</strong>, <a href="{% url 'account_signup' %}" class="alert-link">sign up for an icap account</a> and then <a href="{% url 'account_login' %}" class="alert-link">login to ICAP</a>.</div>
+      <br/>
+  </div>
+</div>
+
+<div class='col-8'>
+<div class="card mt-2 ml-2">
+<h5 class="card-header p-2"><strong>Regional Information</strong></h5>
+<div class="card-body p-2 bg-secondary">
+<table class="table table-bordered table-striped table-sm mb-0 bg-white">
   <thead>
     <tr>
       <th scope="col">Area</th>
       <th scope="col">Application Period</th>
+      <th scope="col">Contact</th>
     </tr>
   </thead>
   <tbody>
 {% for a in areas %}
     <tr>
       <td><a href="{% url 'area_detail' a.slug %}">{{ a.name }}</a></td>
-      <td>{{ a.open_date }}-{{ a.close_date }}</td>
+      <td>{% if a.open_date and a.close_date %}{{ a.open_date|date:'Y-m-d' }} to {{ a.close_date|date:'Y-m-d' }}{% endif %}</td>
+      <td>{% if a.contact and a.phone %}{{ a.contact }} <span class="float-right">{{ a.phone }}</span>{% endif %}</td>
     </tr>
 {% endfor %}
   </tbody>
 </table>
+</div>
+</div>
+</div>
+
 </div>
 {% endblock %}

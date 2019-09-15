@@ -8,13 +8,13 @@
 
 {% block content %}
 <div class="card mt-2 ml-2">
-<h5 class="card-header"><a href="{% url 'area_detail' team.area.slug %}">{{ team.area }}</a> {{ team }}</h5>
-<div class="card-body p-2">
-<table class="table table-bordered table-sm mb-0">
+<h5 class="card-header p-2"><a href="{% url 'area_detail' team.area.slug %}">{{ team.area }}</a> &sect; {{ team }}</h5>
+<div class="card-body p-2 bg-secondary">
+<table class="table table-bordered table-sm mb-0 bg-white">
   <thead>
     <tr>
       <th scope="col">Code</th>
-      <th scope="col">Name</th>
+      <th scope="col">Position</th>
       <th scope="col">Application Period</th>
     </tr>
   </thead>
@@ -23,7 +23,7 @@
     <tr>
       <td><a href="{% url 'position_detail' team.area.slug team.slug p.slug %}">{{ p.code }}</a></td>
       <td><a href="{% url 'position_detail' team.area.slug team.slug p.slug %}">{{ p.name }}</a></td>
-      <td>{% if p.open_date and p.close_date %}{{ p.open_date|date:"Y-m-d" }} to {{ p.close_date|date:"Y-m-d" }}{% endif %}</td>
+      <td>{% if p.open_date and p.close_date %}{{ p.open_date|date:'Y-m-d' }} to {{ p.close_date|date:'Y-m-d' }}{% elif team.area.open_date and team.area.close_date %}{{ team.area.open_date|date:'Y-m-d' }} to {{ team.area.close_date|date:'Y-m-d' }}{% endif %}</td>
     </tr>
 {% endfor %}
   </tbody>

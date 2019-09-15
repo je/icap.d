@@ -36,6 +36,8 @@
 
 <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
   <a class="navbar-brand py-0" style="color:white;" href="/" id="intro-btn"><strong><img src="/s/usfslogo.png" width="20" height="20"> {{ request.site.name }}</strong></a>
+
+  {% block login %}
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#topnav" aria-controls="topnav" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
@@ -43,7 +45,6 @@
   <div class="collapse navbar-collapse" id="topnav">
     <ul class="navbar-nav mr-auto my-2 my-md-0">
     </ul>
-      {% block login %}
       <span class="pull-right py-0">
       {% if user.is_authenticated %}
       <div class="nav-item dropdown">
@@ -59,14 +60,14 @@
        <a class="btn btn-outline-light py-0" href="{% url 'account_login' %}"><strong>Login</strong></a>
       {% endif %}
       </span>
-      {% endblock %}
   </div>
+  {% endblock %}
 </nav>
 
         {% block messages %}
         {% if messages %}
           {% for message in messages %}
-          <div class="alert{% if message.tags %} alert-{{ message.tags }}{% endif %} m-2 pt-0 pb-1">
+          <div class="alert{% if message.tags %} alert-{{ message.tags }}{% endif %} mt-2 ml-2 mr-2 mb-0 pl-2 pr-2 pb-1 pt-0">
           <button type="button" class="close" data-dismiss="alert">&times;</button>
           {% if message.tags %}<strong>{{ message.tags|title }}:</strong> {% endif %}{{ message|safe }}
           </div>

@@ -79,6 +79,10 @@ class AreaUS(models.Model):
     author = models.ForeignKey(User, on_delete=models.PROTECT, related_name="area_author")
     name = models.CharField('name', max_length=80, blank=True, null=True, help_text="")
     slug = models.CharField('slug', max_length=80, blank=True, null=True, help_text="")
+    open_date = models.DateTimeField('effective open', blank=True, null=True, help_text="")
+    close_date = models.DateTimeField('effective close', blank=True, null=True, help_text="")
+    contact = models.CharField('contact', max_length=80, blank=True, null=True, help_text="")
+    phone = models.CharField('phone', max_length=20, blank=True, null=True, help_text="")
     remarks = models.TextField('remarks', max_length=10240, blank=True, null=True, help_text="", )
     tags = TaggableManager(blank=True,)
 
@@ -261,6 +265,8 @@ class Application(models.Model):
     approved_admin = models.NullBooleanField('admin approval?')
     approved_training = models.NullBooleanField('training approval?')
     status = models.CharField('status', max_length=1, choices=APPLICATION_STATUS_CHOICES, blank=True, null=True)
+    status_author = models.ForeignKey(User, on_delete=models.PROTECT, blank=True, null=True, related_name="application_status_author")
+    statused = models.DateTimeField('statused', blank=True, null=True)
 
     class Meta:
         db_table = 'icap_application'

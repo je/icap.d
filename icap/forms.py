@@ -51,7 +51,7 @@ class ApplicantForm(forms.ModelForm):
 
     class Meta:
         model = Applicant
-        exclude = ['created', 'modified', 'applicant','author']
+        exclude = ['created', 'modified', 'applicant', 'author', 'status', 'statused', 'status_author']
 
 class ApplicationForm(forms.ModelForm):
     consideration = forms.ChoiceField(label='consideration', choices=APPLICATION_STATUS_CHOICES, required = True, widget=forms.Select(attrs={'class':'form-control form-control-sm', }),)
@@ -59,9 +59,9 @@ class ApplicationForm(forms.ModelForm):
     remarks = forms.CharField(label='remarks', required = False, widget=forms.Textarea(attrs={'class':'form-control form-control-sm', 'rows': 2, 'placeholder':'additonal remarks'}))
     buy_warrant = forms.NullBooleanField(label='warrant', required=False)
     buy_po = forms.NullBooleanField(label='po', required=False)
-    approved_supervisor = forms.NullBooleanField(label='supervisor approval?', required=False)
-    approved_admin = forms.NullBooleanField(label='admin approval?', required=False)
-    approved_training = forms.NullBooleanField(label='training approval?', required=False)
+    approved_supervisor = forms.NullBooleanField(label='supervisor approval?', required=False, widget=forms.NullBooleanSelect(attrs={'class':'form-control form-control-sm', }),)
+    approved_admin = forms.NullBooleanField(label='admin approval?', required=False, widget=forms.NullBooleanSelect(attrs={'class':'form-control form-control-sm', }),)
+    approved_training = forms.NullBooleanField(label='training approval?', required=False, widget=forms.NullBooleanSelect(attrs={'class':'form-control form-control-sm', }),)
 
     class Meta:
         model = Application

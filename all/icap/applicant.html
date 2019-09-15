@@ -8,16 +8,18 @@
 
 {% block content %}
 {% load tags %}
-{% if user.is_authenticated and perms.icap.add_application_status or user.email == auser.email %}
+{% if user.is_authenticated and perms.icap.add_application_status or request.user.email == auser.email %}
+
 <div class="card mb-2 mt-2 ml-2">
-<h5 class="card-header">
+<h5 class="card-header p-2">
 Applications for '{{ auser.email }}'
 </h5>
-{% if user.is_authenticated and perms.icap.add_application_status %}
-<div class="card-body p-2">
-<table class="table table-bordered table-sm mb-0">
+{% if user.is_authenticated and perms.icap.add_application_status or request.user.email == auser.email %}
+<div class="card-body p-2 bg-secondary">
+<table class="table table-bordered table-sm mb-0 bg-white">
   <thead>
     <tr>
+      <th scope="col">Date / Edited</th>
       <th scope="col">Area</th>
       <th scope="col">Team</th>
       <th scope="col">Position</th>
@@ -28,11 +30,11 @@ Applications for '{{ auser.email }}'
   <tbody>
 {% for a in applicant_applications %}
     <tr>
-      <td><a href="{% url 'area_detail' a.position.team.area.slug %}">{{ a.position.team.area }}</a></td>
+      <td>{{ a.created|date:'Y-m-d' }}{% if a.modified and a.modified|date:'Y-m-d' != a.created|date:'Y-m-d' %} / {{ a.modified|date:'Y-m-d' }}{% endif %}</td>      <td><a href="{% url 'area_detail' a.position.team.area.slug %}">{{ a.position.team.area }}</a></td>
       <td><a href="{% url 'team_detail' a.position.team.area.slug a.position.team.slug %}">{{ a.position.team }}</a></td>
       <td><a href="{% url 'position_detail' a.position.team.area.slug a.position.team.slug a.position.slug %}">{{ a.position }}</a></td>
       <td>{{ a.get_consideration_display }}</td>
-      <td>{{ a.get_application_status_display }}</td>
+      <td><mark class="alert-link p-0">{{ a.get_status_display }}</mark><span class="float-right small">{{ a.status_author}} on {{ a.statused|date:'Y-m-d'}}</span></td>
     </tr>
 {% endfor %}
   </tbody>
@@ -41,39 +43,15 @@ Applications for '{{ auser.email }}'
 </div>
 {% endif %}
 
-{% block apply %}
-{% if user.is_authenticated and request.user == auser %}
-<div class="card-body p-2">
-<table class="table table-bordered table-sm mb-0">
-  <thead>
-    <tr>
-      <th scope="col">Area</th>
-      <th scope="col">Team</th>
-      <th scope="col">Position</th>
-      <th scope="col">Consideration</th>
-      <th scope="col">Application Status</th>
-    </tr>
-  </thead>
-  <tbody>
-{% for a in applicant_applications %}
-    <tr>
-      <td><a href="{% url 'area_detail' a.position.team.area.slug %}">{{ a.position.team.area }}</a></td>
-      <td><a href="{% url 'team_detail' a.position.team.area.slug a.position.team.slug %}">{{ a.position.team }}</a></td>
-      <td><a href="{% url 'position_detail' a.position.team.area.slug a.position.team.slug a.position.slug %}">{{ a.position }}</a></td>
-      <td>{{ a.get_consideration_display }}</td>
-      <td>{{ a.get_application_status_display }}</td>
-    </tr>
-{% endfor %}
-  </tbody>
-</table>
-</div>
-{% endif %}
-{% endblock %}
-
-<div class="card mt-2 ml-2">
-  <h5 class="card-header">
+<div class="card mb-2 mt-2 ml-2">
+  <div class="card-header p-2">
+    <h5 class="float-left">
     Applicant information for '{{ auser.email }}'
-  </h5>
+    </h5>
+    <span class="float-right small">
+    Created {{ applicant.created|date:'Y-m-d' }}{% if applicant.modified and applicant.modified|date:'Y-m-d' != applicant.created|date:'Y-m-d' %} / Last edited {{ applicant.modified|date:'Y-m-d' }}{% endif %}
+    </span>
+    </div>
   <div class="row mt-1 ml-1 mr-1 mb-1">
     <div class="col-sm-6 p-1">
       <div class="card bg-warning">
@@ -239,7 +217,7 @@ Applications for '{{ auser.email }}'
                       <td class="p-0">
                         <ul class="list-inline mb-0">
                           {% for tag in f.tags.all %}
-                              <li class="list-inline-item">{{ tag.name }}</li>
+                              <li class="badge badge-secondary">{{ tag.name }}</li>
                           {% endfor %}
                         </ul>
                       </td>
@@ -250,8 +228,8 @@ Applications for '{{ auser.email }}'
         </div>
       </div>
     </div>
-    </div>
   </div>
+</div>
 {% else %}
 PERMISSION DENIED
 {% endif %}

@@ -16,15 +16,21 @@ label {
 
 {% block content %}
 {% load tags %}
+{% if applicant is None %}
+<div class="alert alert-info mt-2 ml-2 mb-0">
+<a class="alert-link" href="{% url 'account_login' %}">Login</a> to add your applicant information</a> and apply to incident management team positions.
+</div>
+{% else %}
 {% block apply %}
+<form class="needs-validation" id="applicant_form" method="POST" enctype="multipart/form-data" action="{% url 'applicant_update' %}" novalidate>
+{% csrf_token %}
 <div class="card mt-2 ml-2">
 {% if user.is_authenticated %}
  {% if request.user == applicant.author %}
-  <form class="needs-validation" id="applicant_form" method="POST" enctype="multipart/form-data" action="{% url 'applicant_update' %}" novalidate>
-    {% csrf_token %}
-  <h5 class="card-header">
-    Editing applicant information
-    <input class="btn btn-sm btn-primary float-right pb-1" type="submit" value="Save form">
+  <h5 class="card-header p-2">
+    Editing applicant information for '{{ user }}'
+    <input class="btn btn-sm btn-primary float-right pb-1 small" type="submit" value="Save form">
+    </span>
   </h5>
   <div class="row mt-1 ml-1 mr-1 mb-1">
     <div class="col-sm-6 p-1">
@@ -221,8 +227,8 @@ label {
     <div class="col-sm-6 p-1">
       <div class="card bg-warning">
         <div class="card-body">
-          <table class="table table-sm p-0">
-            <tbody>
+          <table class="table table-borderless table-hover table-sm p-0">
+            <thead>
                   {{ fileformset.management_form }}
                   {{ fileformset.non_form_errors.as_ul }}
                   {% for form in fileformset.forms %}
@@ -231,6 +237,8 @@ label {
                       <th>{{ field.label|lower }}</th>
                       {% endfor %}
                     {% endif %}
+            </thead>
+            <tbody>
                     <tr class="{% cycle row1 row2 %}">
                     {% for field in form.visible_fields %}
                       <td class="p-0{% if field.label|lower == 'delete' %} float-right{% endif %}">
@@ -254,16 +262,24 @@ label {
             </tbody>
           </table>
         </div>
+        <div class="alert-info card-footer small">
+          <strong>Do not upload</strong> scans of your driver's license, social security card, or any other '<mark class='text-danger font-weight-bold p-0'>personally identifiable information</mark>'.
+        </div>
       </div>
     </div>
     </div>
-  </form>
+    <div class="card-footer">
+      <span class="small float-right">{% if applicant.created %} Created {{ applicant.created|date:'Y-m-d' }}{% endif %}{% if applicant.modified and applicant.modified|date:'Y-m-d' != applicant.created|date:'Y-m-d' %} / Last edited {{ applicant.modified|date:'Y-m-d' }}{% endif %}
+      </span>
+    </div>
  {% else %}
    CAN'T EDIT THIS APPLICANT
  {% endif %}
 {% endif %}
 </div>
+</form>
 {% endblock %}
+{% endif %}
 
 {% endblock %}
 

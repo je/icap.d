@@ -117,17 +117,20 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
         Q(position__team__area__slug__iexact=area_slug)
         ).exclude(deleted=True)
 
-    applicant, _ = Applicant.objects.get_or_create(author__email__iexact=request.user.email, defaults={'author_id': request.user.id})
-
-    try:
-        position_application = Application.objects.get(
-            Q(position__slug__iexact=position_slug),
-            Q(position__team__slug__iexact=team_slug),
-            Q(position__team__area__slug__iexact=area_slug),
-            Q(applicant__author__email__iexact=request.user.email),
-            ~Q(deleted=True)
-            )
-    except Application.DoesNotExist:
+    if request.user.is_authenticated:
+        applicant, _ = Applicant.objects.get_or_create(author__email__iexact=request.user.email, defaults={'author_id': request.user.id})
+        try:
+            position_application = Application.objects.get(
+                Q(position__slug__iexact=position_slug),
+                Q(position__team__slug__iexact=team_slug),
+                Q(position__team__area__slug__iexact=area_slug),
+                Q(applicant__author__email__iexact=request.user.email),
+                ~Q(deleted=True)
+                )
+        except Application.DoesNotExist:
+            position_application = None
+    else:
+        applicant = None
         position_application = None
 
     if request.method == "POST":
@@ -139,10 +142,10 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
                     set_status = ApplicationStatus.objects.create(author=request.user, application=app, status=app_status, effective=now)
                     app.status = app_status
                     ok = Application.objects.filter(id=app.id).update(status=app_status)
-                    msg = 'Application for USER to <a class=\'alert-link\' href=\'/%s/%s/%s/\'>%s %s %s</a> updated by %s.' % (position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, request.user.email)
+                    msg = 'Application for USER to <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s %s %s</a> updated by %s.' % (position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, request.user.email)
                     messages.success(request, msg)
 
-            msg = 'Applications to <a class=\'alert-link\' href=\'/%s/%s/%s/\'>%s %s %s</a> updated by %s.' % (position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, request.user.email)
+            msg = 'Applications to <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s %s %s</a> updated by %s.' % (position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, request.user.email)
             messages.success(request, msg)
             return HttpResponseRedirect('/%s/%s/%s/' % (position.team.area.slug, position.team.slug, position.slug))
 
@@ -154,7 +157,7 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
             position.open_date = open_status.effective
             position.close_date = close_status.effective
             position.save()
-            msg = 'Open/close dates for <a class=\'alert-link\' href=\'/%s/%s/%s/\'>%s %s %s</a> updated by %s.' % (position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, request.user.email)
+            msg = 'Open/close dates for <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s %s %s</a> updated by %s.' % (position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, request.user.email)
             messages.success(request, msg)
             return HttpResponseRedirect('/%s/%s/%s/' % (position.team.area.slug, position.team.slug, position.slug))
 
@@ -169,7 +172,7 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
             valid_application.author_id = request.user.id
             valid_application.save()
             form.save_m2m()
-            msg = 'Application to <a class=\'alert-link\' href=\'/%s/%s/%s/\'>%s %s %s</a> for <a class=\'alert-link\' href=\'/applicant/%s/\'>%s</a> updated.' % (position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, valid_application.applicant.author.email, valid_application.applicant.author.email)
+            msg = 'Application to <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s %s %s</a> for <a class=\"alert-link\" href=\"/applicant/%s/\">%s</a> updated.' % (position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, valid_application.applicant.author.email, valid_application.applicant.author.email)
             messages.success(request, msg)
             l = Logitem(author=request.user, status='S', message=msg, obj_model='Applicant', obj_id=valid_application.id, obj_in='', obj_out='',)
             l.save()
@@ -180,7 +183,7 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
         else:
             form = ApplicationForm()
 
-    return render(request,'icap/area_team_position.html', {'position': position, 'position_applications': position_applications, 'applicant': applicant, 'form': form,})
+    return render(request,'icap/area_team_position.html', {'position': position, 'position_applications': position_applications, 'applicant': applicant, 'position_application': position_application, 'form': form,})
 
 def ApplicantDetail(request, applicant_user_email):
     now = datetime.datetime.today()  
@@ -196,30 +199,35 @@ def ApplicantDetail(request, applicant_user_email):
 ApplicantFileFormSet = inlineformset_factory(Applicant, File, form=FileForm, can_delete=True)
 
 def ApplicantUpdate(request):
-    applicant, _ = Applicant.objects.get_or_create(author__email__iexact=request.user.email, defaults={'author_id': request.user.id})
-    if request.method == "POST":
-        form = ApplicantForm(request.POST, instance=applicant)
-        fileformset = ApplicantFileFormSet(request.POST, request.FILES, instance=applicant)
-        if form.is_valid():
-            valid_applicant = form.save(commit=False)
+    if request.user.is_authenticated:
+        applicant, _ = Applicant.objects.get_or_create(author__email__iexact=request.user.email, defaults={'author_id': request.user.id})
+        if request.method == "POST":
+            form = ApplicantForm(request.POST, instance=applicant)
             fileformset = ApplicantFileFormSet(request.POST, request.FILES, instance=applicant)
-            if fileformset.is_valid():
-                valid_applicant.save()
-                form.save_m2m()
-                fset = fileformset.save(commit=False)
-                for f in fset:
-                    f.author_id = request.user.id
-                    f.save()
-                fileformset.save()
-                msg = 'Applicant <a class=\'alert-link\' href=\'/applicant/\'>%s</a> updated.' % (valid_applicant.author.email)
-                messages.success(request, msg)
-                l = Logitem(author=request.user, status='S', message=msg, obj_model='Applicant', obj_id=valid_applicant.id, obj_in='', obj_out='',)
-                l.save()
-                return HttpResponseRedirect('/applicant/')
+            if form.is_valid():
+                valid_applicant = form.save(commit=False)
+                fileformset = ApplicantFileFormSet(request.POST, request.FILES, instance=applicant)
+                if fileformset.is_valid():
+                    valid_applicant.save()
+                    form.save_m2m()
+                    fset = fileformset.save(commit=False)
+                    for f in fset:
+                        f.author_id = request.user.id
+                        f.save()
+                    fileformset.save()
+                    msg = 'Applicant <a class=\"alert-link\" href=\"/applicant/\">%s</a> updated.' % (valid_applicant.author.email)
+                    messages.success(request, msg)
+                    l = Logitem(author=request.user, status='S', message=msg, obj_model='Applicant', obj_id=valid_applicant.id, obj_in='', obj_out='',)
+                    l.save()
+                    return HttpResponseRedirect('/applicant/')
 
+        else:
+            form = ApplicantForm(instance=applicant)
+            fileformset = ApplicantFileFormSet(instance=applicant)
     else:
-        form = ApplicantForm(instance=applicant)
-        fileformset = ApplicantFileFormSet(instance=applicant)
+        applicant = None
+        form = None
+        fileformset = None
 
     return render(request,'icap/applicant_update.html', {'applicant': applicant, 'form': form, 'fileformset': fileformset,})
 

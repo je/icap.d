@@ -8,9 +8,38 @@
 
 {% block content %}
 <div class="card mt-2 ml-2">
-<h5 class="card-header">{{ area }}</h5>
-<div class="card-body p-2">
-<table class="table table-bordered table-sm mb-0">
+  <div class="card-header p-2">
+      <h5 class="mb-0 float-left">
+        {{ area }}
+      </h5>
+    <div class="float-right">
+    {% if user.is_authenticated and perms.icap.add_application_status %}
+    <form class="needs-validation" id="areastatus_form" method="POST" enctype="multipart/form-data" action="{% url 'area_detail' area.slug %}" novalidate>
+    {% csrf_token %}
+    {% if area.open_date and area.close_date %}
+    Open from <input type="date" name="open" value="{{ area.open_date|date:'Y-m-d' }}" class="pb-1 mr-1" maxlength="10" id="id_open" placeholder="YYYY-MM-DD" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"> to 
+    <input type="date" name="close" value="{{ area.close_date|date:'Y-m-d' }}" class="pb-1 mr-1" maxlength="10" id="id_close" placeholder="YYYY-MM-DD" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}">
+    {% else %}
+    Open from <input type="date" name="open" value="" class="pb-1 mr-1" maxlength="10" id="id_open" placeholder="YYYY-MM-DD" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"> to 
+    <input type="date" name="close" value="" class="pb-1 mr-1" maxlength="10" id="id_close" placeholder="YYYY-MM-DD" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}">
+    {% endif %}
+    <input class="btn btn-sm btn-primary float-right pb-1 small" type="submit" name="positionstatus" value="Save dates">
+    </form>
+    {% else %}
+    {% now "Y-m-d" as todays_date %}
+     {% if area.open_date and area.close_date %}
+     {% if area.open_date|date:'Y-m-d' <= todays_date and area.close_date|date:'Y-m-d' >= todays_date %}
+     <span class='text-success font-weight-bold'>
+     {% else %}
+     <span class='text-danger font-weight-bold'>
+     {% endif %}
+     Open from {{ area.open_date|date:'Y-m-d' }} to {{ area.close_date|date:'Y-m-d' }}
+     {% endif %}
+    {% endif %}
+    </div>
+  </div>
+<div class="card-body p-2 bg-secondary">
+<table class="table table-bordered table-sm mb-0 bg-white">
   <thead>
     <tr>
       <th scope="col">Team</th>
@@ -21,7 +50,7 @@
 {% for t in area_teams %}
     <tr>
       <td><a href="{% url 'team_detail' t.area.slug t.slug %}">{{ t.name }}</a></td>
-      <td>{% if t.open_date and t.close_date %}{{ t.open_date|date:"Y-m-d" }} to {{ t.close_date|date:"Y-m-d" }}{% endif %}</td>
+      <td>{% if t.open_date and t.close_date %}{{ t.open_date|date:'Y-m-d' }} to {{ t.close_date|date:'Y-m-d' }}{% elif area.open_date and area.close_date %}{{ area.open_date|date:'Y-m-d' }} to {{ area.close_date|date:'Y-m-d' }}{% endif %}</td>
       </tr>
 {% endfor %}
   </tbody>

@@ -13,7 +13,7 @@ admin.site.register(Logitem, LogitemAdmin)
 
 class AreaUSAdmin(admin.ModelAdmin):
     date_hierarchy = 'created'
-    list_display = ('name', 'slug', 'deleted',)
+    list_display = ('name', 'slug', 'open_date', 'close_date', 'contact', 'phone', 'deleted',)
     ordering = ['name',]
     list_per_page = 50
     list_filter = ('deleted',)
@@ -35,7 +35,7 @@ class PositionAdmin(admin.ModelAdmin):
     date_hierarchy = 'created'
     list_display = ('code', 'name', 'team', 'team_area', 'open_date', 'close_date', 'deleted',)
     list_per_page = 50
-    list_filter = ('team__area', 'code', 'deleted',)
+    list_filter = ('team__area', 'team', 'code', 'deleted',)
     list_display_links = ('code', 'name',)
     save_as = True
 
