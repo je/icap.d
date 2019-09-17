@@ -71,7 +71,7 @@ def update_user_login(sender, user, **kwargs):
 user_logged_in.connect(update_user_login)
 
 def Index(request):
-    areas = AreaUS.objects.all()
+    areas = AreaUS.objects.exclude(deleted=True)
     return render(request, 'index.html', {'areas': areas,})
 
 def AreaDetail(request, area_slug):
