@@ -75,20 +75,34 @@ def Index(request):
     return render(request, 'index.html', {'areas': areas,})
 
 def AreaDetail(request, area_slug):
-    now = datetime.datetime.today()  
-    adate = datetime.datetime.now().year
-    ayear = adate - 2
-    iyear = datetime.date(ayear,1,1)
     area_ = get_object_or_404(AreaUS, slug__iexact=area_slug)
+    if request.method == "POST":
+        if "areastatus" in request.POST:
+            open_date = request.POST.get('open')
+            close_date = request.POST.get('close')
+            status = AreaUS.objects.filter(slug__iexact=area_slug).update(author=request.user, open_date=open_date, close_date=close_date)
+            msg = 'Open/close dates for <a class=\"alert-link\" href=\"/%s/">%s</a> updated by %s. Position dates override team dates, team dates override area dates.' % (area.slug, area, request.user.email)
+            messages.success(request, msg)
+            l = Logitem(author=request.user, status='S', message=msg, obj_model='Area', obj_id=area.id, obj_in='', obj_out='',)
+            l.save()
+            return HttpResponseRedirect('/%s/' % (area.slug))
     area_teams = Team.objects.filter(
         Q(area__slug__iexact=area_slug)
         ).exclude(deleted=True)
     return render(request,'icap/area.html', {'area': area_, 'area_teams': area_teams,})
 
 def TeamDetail(request, area_slug, team_slug):
-    now = datetime.datetime.today()
-    adate = datetime.datetime.now().year
     team = get_object_or_404(Team, Q(area__slug=area_slug), slug__iexact=team_slug)
+    if request.method == "POST":
+        if "teamstatus" in request.POST:
+            open_date = request.POST.get('open')
+            close_date = request.POST.get('close')
+            status = Team.objects.filter(Q(area__slug=area_slug, slug__iexact=team_slug)).update(author=request.user, open_date=open_date, close_date=close_date)
+            msg = 'Open/close dates for <a class=\"alert-link\" href=\"/%s/%s/">%s %s</a> updated by %s. Position dates override team dates, team dates override area dates.' % (team.area.slug, team.slug, team.area, team, request.user.email)
+            messages.success(request, msg)
+            l = Logitem(author=request.user, status='S', message=msg, obj_model='Team', obj_id=team.id, obj_in='', obj_out='',)
+            l.save()
+            return HttpResponseRedirect('/%s/%s/' % (team.area.slug, team.slug))
     team_positions = Position.objects.filter(
         Q(team__slug__iexact=team_slug),
         Q(team__area__slug__iexact=area_slug)
@@ -96,8 +110,6 @@ def TeamDetail(request, area_slug, team_slug):
     return render(request,'icap/area_team.html', {'team': team, 'team_positions': team_positions,})
 
 def PositionDetail(request, area_slug, team_slug, position_slug):
-    now = datetime.datetime.today()  
-    adate = datetime.datetime.now().year
     position = get_object_or_404(Position, Q(team__area__slug=area_slug), Q(team__slug=team_slug), slug__iexact=position_slug)
     #position.popen = PositionStatus.objects.filter(
     #    Q(position__slug__iexact=position_slug),
@@ -147,6 +159,8 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
 
             msg = 'Applications to <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s %s %s</a> updated by %s.' % (position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, request.user.email)
             messages.success(request, msg)
+            l = Logitem(author=request.user, status='S', message=msg, obj_model='ApplicationStatus', obj_id='', obj_in='', obj_out='',)
+            l.save()
             return HttpResponseRedirect('/%s/%s/%s/' % (position.team.area.slug, position.team.slug, position.slug))
 
         if "positionstatus" in request.POST:
@@ -157,8 +171,10 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
             position.open_date = open_status.effective
             position.close_date = close_status.effective
             position.save()
-            msg = 'Open/close dates for <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s %s %s</a> updated by %s.' % (position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, request.user.email)
+            msg = 'Open/close dates for <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s %s %s</a> updated by %s. Position dates override team dates, team dates override area dates.' % (position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, request.user.email)
             messages.success(request, msg)
+            l = Logitem(author=request.user, status='S', message=msg, obj_model='Position', obj_id=position.id, obj_in='', obj_out='',)
+            l.save()
             return HttpResponseRedirect('/%s/%s/%s/' % (position.team.area.slug, position.team.slug, position.slug))
 
         if position_application:

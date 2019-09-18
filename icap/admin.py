@@ -23,7 +23,7 @@ admin.site.register(AreaUS, AreaUSAdmin)
 
 class TeamAdmin(admin.ModelAdmin):
     date_hierarchy = 'created'
-    list_display = ('name', 'area', 'pool', 'deleted',)
+    list_display = ('name', 'area', 'open_date', 'close_date', 'pool', 'deleted',)
     ordering = ['name', 'area',]
     list_per_page = 50
     list_filter = ('area', 'pool', 'deleted')

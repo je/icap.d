@@ -106,6 +106,8 @@ class Team(models.Model):
     name = models.CharField('name', max_length=80, blank=True, null=True, help_text="")
     slug = models.CharField('slug', max_length=80, blank=True, null=True, help_text="")
     area = models.ForeignKey(AreaUS, on_delete=models.PROTECT, related_name="team_area")
+    open_date = models.DateTimeField('effective open', blank=True, null=True, help_text="")
+    close_date = models.DateTimeField('effective close', blank=True, null=True, help_text="")
     remarks = models.TextField('remarks', max_length=10240, blank=True, null=True, help_text="", )
     pool = models.NullBooleanField('allow selection to any area team?')
     tags = TaggableManager(blank=True,)

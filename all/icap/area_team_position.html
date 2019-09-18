@@ -28,6 +28,9 @@ label {
     {% if position.open_date and position.close_date %}
     Open from <input type="date" name="open" value="{{ position.open_date|date:'Y-m-d' }}" class="pb-1 mr-1" maxlength="10" id="id_open" placeholder="YYYY-MM-DD" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"> to 
     <input type="date" name="close" value="{{ position.close_date|date:'Y-m-d' }}" class="pb-1 mr-1" maxlength="10" id="id_close" placeholder="YYYY-MM-DD" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}">
+    {% elif position.team.open_date and position.team.close_date %}
+    Open from <input type="date" name="open" value="{{ position.team.open_date|date:'Y-m-d' }}" class="pb-1 mr-1" maxlength="10" id="id_open" placeholder="YYYY-MM-DD" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"> to 
+    <input type="date" name="close" value="{{ position.team.close_date|date:'Y-m-d' }}" class="pb-1 mr-1" maxlength="10" id="id_close" placeholder="YYYY-MM-DD" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}">
     {% elif position.team.area.open_date and position.team.area.close_date %}
     Open from <input type="date" name="open" value="{{ position.team.area.open_date|date:'Y-m-d' }}" class="pb-1 mr-1" maxlength="10" id="id_open" placeholder="YYYY-MM-DD" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"> to 
     <input type="date" name="close" value="{{ position.team.area.close_date|date:'Y-m-d' }}" class="pb-1 mr-1" maxlength="10" id="id_close" placeholder="YYYY-MM-DD" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}">
@@ -118,6 +121,16 @@ No applicants for this position. We should show a table of applicants to {{ posi
      {% if position.open_date|date:'Y-m-d' <= todays_date and position.close_date|date:'Y-m-d' >= todays_date %}
      <input class="btn btn-sm btn-primary float-right ml-1 pb-1 small" type="submit" value="Save application">
      {% endif %}
+    {% elif position.team.open_date and position.team.close_date %}
+     {% if position.team.open_date|date:'Y-m-d' <= todays_date and position.team.close_date|date:'Y-m-d' >= todays_date %}
+     <span class='text-success font-weight-bold'>
+     {% else %}
+     <span class='text-danger font-weight-bold'>
+     {% endif %}
+     Open from {{ position.team.open_date|date:'Y-m-d' }} to {{ position.team.close_date|date:'Y-m-d' }}
+     {% if position.team.open_date|date:'Y-m-d' <= todays_date and position.team.close_date|date:'Y-m-d' >= todays_date %}
+     <input class="btn btn-sm btn-primary float-right ml-1 pb-1 small" type="submit" value="Save application">
+     {% endif %}
     {% elif position.team.area.open_date and position.team.area.close_date %}
      {% if position.team.area.open_date|date:'Y-m-d' <= todays_date and position.team.area.close_date|date:'Y-m-d' >= todays_date %}
      <span class='text-success font-weight-bold'>
@@ -163,6 +176,12 @@ No applicants for this position. We should show a table of applicants to {{ posi
    {% else %}
    You applied to this position on {{ position_application.created|date:'Y-m-d' }}. The application period for this position is closed. 
    {% endif %}
+  {% elif position.team.open_date and position.team.close_date %}
+   {% if position.team.open_date|date:'Y-m-d' <= todays_date and position.team.close_date|date:'Y-m-d' >= todays_date %}
+   You applied to this position on {{ position_application.created|date:'Y-m-d' }}, and may edit your application below.
+   {% else %}
+   You applied to this position on {{ position_application.created|date:'Y-m-d' }}. The application period for this position is closed. 
+   {% endif %}
   {% elif position.team.area.open_date and position.team.area.close_date %}
    {% if position.team.area.open_date|date:'Y-m-d' <= todays_date and position.team.area.close_date|date:'Y-m-d' >= todays_date %}
    You applied to this position on {{ position_application.created|date:'Y-m-d' }}, and may edit your application below.
@@ -180,6 +199,13 @@ No applicants for this position. We should show a table of applicants to {{ posi
 <div class="alert alert-info mt-2 ml-2 mr-2 mb-0 pl-2 pr-2 pb-1 pt-1">
   {% if position.open_date and position.close_date %}
    {% if position.open_date|date:'Y-m-d' <= todays_date and position.close_date|date:'Y-m-d' >= todays_date %}
+   You have not applied to this position, and may apply using the application form below.
+   {% if position.team.area.name == 'Eastern' %} Remember to upload your '<mark class='text-success p-0'>Master Training and Experience Record</mark>' on your <a class="alert-link" href="{% url 'applicant_update' %}">applicant info</a> page.{% endif %}
+   {% else %}
+   You have not applied to this position. The application period for this position is closed. 
+   {% endif %}
+  {% elif position.team.open_date and position.team.close_date %}
+   {% if position.team.open_date|date:'Y-m-d' <= todays_date and position.team.close_date|date:'Y-m-d' >= todays_date %}
    You have not applied to this position, and may apply using the application form below.
    {% if position.team.area.name == 'Eastern' %} Remember to upload your '<mark class='text-success p-0'>Master Training and Experience Record</mark>' on your <a class="alert-link" href="{% url 'applicant_update' %}">applicant info</a> page.{% endif %}
    {% else %}
