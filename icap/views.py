@@ -151,17 +151,33 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
                 app_form = 'application_status_' + str(app.id)
                 if app_form in request.POST:
                     app_status = request.POST.get(app_form,'')
-                    set_status = ApplicationStatus.objects.create(author=request.user, application=app, status=app_status, effective=now)
+                    set_status = ApplicationStatus.objects.create(author=request.user, application=app, status=app_status, effective=datetime.datetime.now())
                     app.status = app_status
                     ok = Application.objects.filter(id=app.id).update(status=app_status)
-                    msg = 'Application for USER to <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s %s %s</a> updated by %s.' % (position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, request.user.email)
+                    msg = 'Application for %s to <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s %s %s</a> updated by %s.' % (app.applicant.author.email, position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, request.user.email)
                     messages.success(request, msg)
 
-            msg = 'Applications to <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s %s %s</a> updated by %s.' % (position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, request.user.email)
+            msg = '%s applications to <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s %s %s</a> updated by %s.' % (position_applications.count(), position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, request.user.email)
             messages.success(request, msg)
             l = Logitem(author=request.user, status='S', message=msg, obj_model='ApplicationStatus', obj_id='', obj_in='', obj_out='',)
             l.save()
             return HttpResponseRedirect('/%s/%s/%s/' % (position.team.area.slug, position.team.slug, position.slug))
+        else:
+            for app in position_applications:
+                app_button = 'app_' + str(app.id)
+                if app_button in request.POST:
+                    app_form = 'application_status_' + str(app.id)
+                    if app_form in request.POST:
+                        app_status = request.POST.get(app_form,'')
+                        set_status = ApplicationStatus.objects.create(author=request.user, application=app, status=app_status, effective=datetime.datetime.now())
+                        app.status = app_status
+                        ok = Application.objects.filter(id=app.id).update(status=app_status)
+                        msg = 'Application for %s to <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s %s %s</a> updated by %s.' % (app.applicant.author.email, position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position, request.user.email)
+                        messages.success(request, msg)
+                        l = Logitem(author=request.user, status='S', message=msg, obj_model='ApplicationStatus', obj_id='', obj_in='', obj_out='',)
+                        l.save()
+                        return HttpResponseRedirect('/%s/%s/%s/' % (position.team.area.slug, position.team.slug, position.slug))
+
 
         if "positionstatus" in request.POST:
             open_date = request.POST.get('open')
@@ -202,8 +218,6 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
     return render(request,'icap/area_team_position.html', {'position': position, 'position_applications': position_applications, 'applicant': applicant, 'position_application': position_application, 'form': form,})
 
 def ApplicantDetail(request, applicant_user_email):
-    now = datetime.datetime.today()  
-    adate = datetime.datetime.now().year
     auser = get_object_or_404(User, email__iexact=applicant_user_email)
     applicant, _ = Applicant.objects.get_or_create(author__email__iexact=applicant_user_email, defaults={'author_id': request.user.id})
     applicant_applications = Application.objects.filter(

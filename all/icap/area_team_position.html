@@ -46,6 +46,12 @@ label {
 {% if position_applications %}
 <div class="card-body p-2 bg-secondary">
 <table class="table table-bordered table-sm mb-0 bg-white">
+<caption class="bg-white pl-2"><small>{% if position_applications %}{{ position_applications|length }}{% else %}0{% endif%} application{{ position_applications|length|pluralize }} for this position.
+{% regroup position_applications|dictsort:"status" by get_status_display as app_list %}
+{% for group in app_list %}
+{{ group.list|length }} {% if group.grouper == '' %}UNSTATUSED{% else %}{{ group.grouper }}{% endif %}{% if forloop.last %}.{% elif forloop.first and forloop.revcounter == 1 %} and {% elif forloop.revcounter == 1 %}, and {% else %}, {% endif %}
+{% endfor %}
+</small></caption>
 <form class="needs-validation" id="applications_form" method="POST" enctype="multipart/form-data" action="{% url 'position_detail' position.team.area.slug position.team.slug position.slug %}" novalidate>
   {% csrf_token %}
   <thead>
@@ -80,7 +86,7 @@ label {
         <option value="W"{% if a.status == 'W' %} selected{% endif %}>WITHDRAWN</option>
       </select>
       <span class="input-group-btn">
-       <input class="btn btn-sm btn-primary ml-1 pb-1 small" type="submit" name="application_{{ a.id }}" value="Save">
+       <input class="btn btn-sm btn-primary ml-1 pb-1 small" type="submit" name="app_{{ a.id }}" value="Save">
       </span>
       </div>
       </div>
