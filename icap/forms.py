@@ -12,9 +12,8 @@ from icap.models import *
 timenow = datetime.datetime.utcnow().replace(tzinfo=utc)
 
 class FeedbackForm(forms.Form):
-    firstname = forms.CharField(required=False,)
-    lastname = forms.CharField(required=False,)
-    email = forms.CharField(required=False,)
+    fullname = forms.CharField(required=False,)
+    email = forms.CharField(label='email', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'pattern': '[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$', 'placeholder':'your_email@example.com'}))
     feedback = forms.CharField(required=False, widget=forms.Textarea(attrs={'class':'span9', 'placeholder':'Type a message here.', 'rows': 5}))
 
 class FileForm(forms.ModelForm):

@@ -21,50 +21,45 @@ from django.contrib.gis import geos
 from django.contrib.gis.geos import *
 from django.contrib.gis.measure import D, Area
 from django.contrib.gis.db.models import Extent, Union, Collect
+from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.core.mail import send_mail, send_mass_mail, mail_managers
 from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 import calendar
 import zipfile
 import os
-#from django.core.urlresolvers import reverse_lazy
 from django.urls import reverse_lazy
 #from django.views.decorators.cache import cache_page
 from guardian.shortcuts import assign, get_users_with_perms, get_objects_for_user, remove_perm
-from django.core.mail import send_mail, send_mass_mail
-from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
 
 def Feedback(request):
     when = datetime.datetime.now()
     if request.method == 'POST':
         form = FeedbackForm(request.POST)
         if form.is_valid():
-            fn = form.cleaned_data['firstname']
-            ln = form.cleaned_data['lastname']
+            fn = form.cleaned_data['fullname']
             em = form.cleaned_data['email']
             fm = form.cleaned_data['feedback']
             mailfrom = 'feedback@' + request.get_host()
-            # fm = str(form)
-            mtxt = "Feedback from user. \r\n" + fn +"\r\n" + ln +"\r\n" + em +"\r\n" + fm +"\r\n"
-            mhtm = "Feedback from user. <br/><br/>" + fn + "<br/>" + ln + "<br/>" + em + "<br/>" + fm + "<br/>"
-            msg = EmailMultiAlternatives('Feedback from user', mtxt, mailfrom, [mailfrom,])
-            msg.attach_alternative(mhtm, "text/html")
-            msg.send()
+            mtxt = "Feedback from " + settings.SITE_URL + ". \r\n" + fn +"\r\n" + em +"\r\n" + fm +"\r\n"
+            mhtm = "Feedback from user " + settings.SITE_URL + ". <br/><br/>" + fn + "<br/>" + em + "<br/>" + fm + "<br/>"
+            msubj = "Feedback from " + settings.SITE_URL
+            msg = mail_managers(msubj, mtxt, html_message=mhtm)
             m = 'Feedback sent. Thank your for your comment or complaint.'
             messages.success(request, m)
             return HttpResponseRedirect('/')
     else:
         form = FeedbackForm()
 
-    return render(request,'icap/event_map.html', { 'when': when, 'form': form, })
-
-from django.contrib.auth.signals import user_logged_in, user_logged_out
+    return render(request,'icap/feedback.html', { 'when': when, 'form': form, })
 
 def update_user_login(sender, user, **kwargs):
     msg = 'User %s login successful.' % (user)
     l = Logitem(author=user, status='S', message=msg, obj_model='Session', obj_id='', obj_in='', obj_out='',)
     l.save()
     if not user.has_perm('icap.add_applicant'):
-        assign('icap.add_applicant',user)
+        assign('icap.add_applicant', user)
     #user.userlogin_set.create(timestamp=timezone.now())
     #user.save()
 
@@ -83,13 +78,13 @@ def AreaDetail(request, area_slug):
             status = AreaUS.objects.filter(slug__iexact=area_slug).update(author=request.user, open_date=open_date, close_date=close_date)
             msg = 'Open/close dates for <a class=\"alert-link\" href=\"/%s/">%s</a> updated by %s. Position dates override team dates, team dates override area dates.' % (area.slug, area, request.user.email)
             messages.success(request, msg)
-            l = Logitem(author=request.user, status='S', message=msg, obj_model='Area', obj_id=area.id, obj_in='', obj_out='',)
+            l = Logitem(author=request.user, status='S', message=msg, obj_model='Area', obj_id=area_.id, obj_in='', obj_out='',)
             l.save()
-            return HttpResponseRedirect('/%s/' % (area.slug))
+            return HttpResponseRedirect('/%s/' % (area_.slug))
     area_teams = Team.objects.filter(
         Q(area__slug__iexact=area_slug)
         ).exclude(deleted=True)
-    return render(request,'icap/area.html', {'area': area_, 'area_teams': area_teams,})
+    return render(request, 'icap/area.html', {'area': area_, 'area_teams': area_teams,})
 
 def TeamDetail(request, area_slug, team_slug):
     team = get_object_or_404(Team, Q(area__slug=area_slug), slug__iexact=team_slug)
@@ -107,22 +102,10 @@ def TeamDetail(request, area_slug, team_slug):
         Q(team__slug__iexact=team_slug),
         Q(team__area__slug__iexact=area_slug)
         ).exclude(deleted=True)
-    return render(request,'icap/area_team.html', {'team': team, 'team_positions': team_positions,})
+    return render(request, 'icap/area_team.html', {'team': team, 'team_positions': team_positions,})
 
 def PositionDetail(request, area_slug, team_slug, position_slug):
     position = get_object_or_404(Position, Q(team__area__slug=area_slug), Q(team__slug=team_slug), slug__iexact=position_slug)
-    #position.popen = PositionStatus.objects.filter(
-    #    Q(position__slug__iexact=position_slug),
-    #    Q(position__team__slug__iexact=team_slug),
-    #    Q(position__team__area__slug__iexact=area_slug),
-    #    Q(status__iexact='O')
-    #    ).latest('modified')
-    #position.pclose = PositionStatus.objects.filter(
-    #    Q(position__slug__iexact=position_slug),
-    #    Q(position__team__slug__iexact=team_slug),
-    #    Q(position__team__area__slug__iexact=area_slug),
-    #    Q(status__iexact='C')
-    #    ).latest('modified')
     position_applications = Application.objects.filter(
         Q(position__slug__iexact=position_slug),
         Q(position__team__slug__iexact=team_slug),
@@ -150,7 +133,7 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
             for app in position_applications:
                 app_form = 'application_status_' + str(app.id)
                 if app_form in request.POST:
-                    app_status = request.POST.get(app_form,'')
+                    app_status = request.POST.get(app_form, '')
                     set_status = ApplicationStatus.objects.create(author=request.user, application=app, status=app_status, effective=datetime.datetime.now())
                     app.status = app_status
                     ok = Application.objects.filter(id=app.id).update(status=app_status)
@@ -168,7 +151,7 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
                 if app_button in request.POST:
                     app_form = 'application_status_' + str(app.id)
                     if app_form in request.POST:
-                        app_status = request.POST.get(app_form,'')
+                        app_status = request.POST.get(app_form, '')
                         set_status = ApplicationStatus.objects.create(author=request.user, application=app, status=app_status, effective=datetime.datetime.now())
                         app.status = app_status
                         ok = Application.objects.filter(id=app.id).update(status=app_status)
@@ -215,7 +198,7 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
         else:
             form = ApplicationForm()
 
-    return render(request,'icap/area_team_position.html', {'position': position, 'position_applications': position_applications, 'applicant': applicant, 'position_application': position_application, 'form': form,})
+    return render(request, 'icap/area_team_position.html', {'position': position, 'position_applications': position_applications, 'applicant': applicant, 'position_application': position_application, 'form': form,})
 
 def ApplicantDetail(request, applicant_user_email):
     auser = get_object_or_404(User, email__iexact=applicant_user_email)
@@ -259,5 +242,4 @@ def ApplicantUpdate(request):
         form = None
         fileformset = None
 
-    return render(request,'icap/applicant_update.html', {'applicant': applicant, 'form': form, 'fileformset': fileformset,})
-
+    return render(request, 'icap/applicant_update.html', {'applicant': applicant, 'form': form, 'fileformset': fileformset,})
