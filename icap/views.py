@@ -55,7 +55,7 @@ def Feedback(request):
     return render(request,'icap/feedback.html', { 'when': when, 'form': form, })
 
 def update_user_login(sender, user, **kwargs):
-    msg = 'User %s login successful.' % (user)
+    msg = 'User %s login successful.' % (user.email)
     l = Logitem(author=user, status='S', message=msg, obj_model='Session', obj_id='', obj_in='', obj_out='',)
     l.save()
     if not user.has_perm('icap.add_applicant'):
