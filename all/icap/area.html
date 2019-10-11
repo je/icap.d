@@ -13,7 +13,9 @@
         {{ area }}
       </h5>
     <div class="float-right">
-    {% if user.is_authenticated and perms.icap.add_applicationstatus %}
+    {% load guardian_tags %}
+    {% get_obj_perms request.user for area as "area_perms" %}
+    {% if user.is_authenticated and "manage_area" in area_perms %}
     <form class="needs-validation" id="areastatus_form" method="POST" enctype="multipart/form-data" action="{% url 'area_detail' area.slug %}" novalidate>
     {% csrf_token %}
     {% if area.open_date and area.close_date %}
@@ -40,28 +42,36 @@
   </div>
 <div class="card-body p-2">
 <div class="row">
-  <div class='col-sm-4'>
-  <div class='card'>
-  <div class='card-body'>
-    <div class=''>
-    <h6><strong>Background</strong></h6>
+    <div class='col-sm-4'>
+      <div class='card'>
+        <div class='card-body'>
+          <div class=''>
+            <h6><strong>Background</strong></h6>
+          </div>
+          <div class=''>
+            The Incident Command Application was developed to facilitate Incident Management Teams in recruiting for and filling team positions. These positions are only for temporary assignments during an incident.<br/>
+            <br/>
+            All positions listed follow National Wildfire Coordination Group (NWCG) standard positions found in PMS 310-1 Wildland Fire Qualification System Guide. In order to apply to any position you must meet the qualifications and training as outlined in the 310-1 and be certified through your respective agency.<br/>
+          </div>
+        </div>
+      </div>
+      <div class='alert alert-info mt-4'>
+      {% if user.is_authenticated %}
+        <h6><strong>Directions</strong></h6>
+          <input type="checkbox" class="" disabled checked /> <strong>Step 1</strong>: <a class="alert-link" href="{% url 'account_signup' %}">Sign up for an icap account</a> at the <a class="alert-link" href="{% url 'account_signup' %}">signup page</a>.<br/>
+          <input type="checkbox" class="" disabled {% if applicant > 0 %}checked {% endif %}/> <strong>Step 2</strong>: <a class="alert-link" href="{% url 'applicant_update' %}">Add your applicant information</a> at the <a class="alert-link" href="{% url 'applicant_update' %}">applicant info form</a>.<br/>
+          <input type="checkbox" class="" disabled {% if applicant_applications > 0 %}checked {% endif %}/> <strong>Step 3</strong>: From the <a class="alert-link" href="{% url 'index' %}">home page</a>, browse to a region, team, and positon, fill out the application, and save the form. Your applications and their status are listed on your <a class="alert-link" href="{% url 'applicant_detail' request.user.email %}">applicant history page</a>.<br/>
+      {% else %}
+          <input type="checkbox" class="" disabled /> <strong>Step 1</strong>: <a class="alert-link" href="{% url 'account_signup' %}">Sign up for an icap account</a> at the <a class="alert-link" href="{% url 'account_signup' %}">signup page</a>.<br/>
+          <input type="checkbox" class="" disabled /> <strong>Step 2</strong>: <a class="alert-link" href="{% url 'applicant_update' %}">Add your applicant information</a> at the <a class="alert-link" href="{% url 'applicant_update' %}">applicant info form</a>.<br/>
+          <input type="checkbox" class="" disabled /> <strong>Step 3</strong>: From the <a class="alert-link" href="{% url 'index' %}">home page</a>, browse to a region, team, and positon, fill out the application, and save the form. Your applications and their status are listed on your applicant history page.<br/>
+      {% endif %}
+      </div>
     </div>
-    <div class=''>
-        The Incident Command Application was developed to facilitate Incident Management Teams in recruiting for and filling team positions. These positions are only for temporary assignments during an incident.<br/>
-        <br/>
-        All positions listed follow National Wildfire Coordination Group (NWCG) standard positions found in PMS 310-1 Wildland Fire Qualification System Guide. In order to apply to any position you must meet the qualifications and training as outlined in the 310-1 and be certified through your respective agency.<br/>
-        {% if not user.is_authenticated %}
-        <br>
-        <div class="alert alert-info">
-        If you need to <strong>apply to an incident management team position</strong>, <a href="{% url 'account_signup' %}" class="alert-link">sign up for an icap account</a> and then <a href="{% url 'account_login' %}" class="alert-link">login to ICAP</a>.</div>
-        {% endif %}
-    </div>
-  </div>
-  </div>
-</div>
 
 <div class="col-sm-8">
   <div class="card">
+    <h5 class="card-header p-2"><strong>Select a team below</strong></h5>
   <div class="card-body p-2 bg-secondary">
   <table class="table table-bordered table-sm mb-0 bg-white">
     <thead>
@@ -74,14 +84,21 @@
   {% for t in area_teams %}
       <tr>
         <td><a href="{% url 'team_detail' t.area.slug t.slug %}">{{ t.name }}</a></td>
-        <td>{% if t.open_date and t.close_date %}{{ t.open_date|date:'Y-m-d' }} to {{ t.close_date|date:'Y-m-d' }}{% elif area.open_date and area.close_date %}{{ area.open_date|date:'Y-m-d' }} to {{ area.close_date|date:'Y-m-d' }}{% endif %}</td>
+        <td>{% if t.open_date and t.close_date %}{{ t.open_date|date:'Y-m-d' }} to {{ t.close_date|date:'Y-m-d' }}{% elif area.open_date and area.close_date %}{{ area.open_date|date:'Y-m-d' }} to {{ area.close_date|date:'Y-m-d' }}{% else %}not specified{% endif %}</td>
         </tr>
   {% endfor %}
     </tbody>
   </table>
   </div>
+    {% if user.is_authenticated and "manage_area" in area_perms %}
+  <div class="card-footer p-2 small">
+    You are a coordinator for {{ area }} and can set open/close dates, view <a href="{% url 'area_applicants' area.slug %}">all applicants to area teams</a>, and select applicants into team positions.
+  </div>  
+    {% endif %}
   </div>
 </div>
 </div>
 </div>
+
 {% endblock %}
+

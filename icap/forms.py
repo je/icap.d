@@ -13,7 +13,7 @@ timenow = datetime.datetime.utcnow().replace(tzinfo=utc)
 
 class FeedbackForm(forms.Form):
     fullname = forms.CharField(required=False,)
-    email = forms.CharField(label='email', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'pattern': '[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$', 'placeholder':'your_email@example.com'}))
+    email = forms.CharField(label='email', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'pattern': '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-z]{2,4}$', 'placeholder':'your_email@example.com'}))
     feedback = forms.CharField(required=False, widget=forms.Textarea(attrs={'class':'span9', 'placeholder':'Type a message here.', 'rows': 5}))
 
 class FileForm(forms.ModelForm):
@@ -35,18 +35,18 @@ class ApplicantForm(forms.ModelForm):
     category = forms.ModelChoiceField(label='category', required = True, queryset=Category.objects.all(), widget=forms.Select(attrs={'class':'form-control form-control-sm', }),)
     dispatch_office = forms.CharField(label='dispatch office', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'dispatch office'}))
     host_agency = forms.CharField(label='host agency', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'host agency'}))
-    iqcs = forms.CharField(label='iqcs', required = True, max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'############'}))
+    iqcs = forms.CharField(label='iqcs/iqs', required = True, max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'############'}))
     work = forms.CharField(label='work', required = False, max_length=20, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'### ###-####'}))
     home = forms.CharField(label='home', required = False, max_length=20, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'### ###-####'}))
     cell = forms.CharField(label='cell', required = False, max_length=20, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'### ###-####'}))
     qualifications = forms.CharField(label='qualifications', required = False, widget=forms.Textarea(attrs={'class':'form-control form-control-sm', 'rows': 2, 'placeholder':'qualifications'}))
     remarks = forms.CharField(label='remarks', required = False, widget=forms.Textarea(attrs={'class':'form-control form-control-sm', 'rows': 2, 'placeholder':'additonal remarks'}))
     supervisor_name = forms.CharField(label='supervisor', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'supervisor name'}))
-    supervisor_email = forms.CharField(label='supervisor email', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'pattern': '[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$', 'placeholder':'supervisor@example.com'}))
+    supervisor_email = forms.CharField(label='supervisor email', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'pattern': '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,4}$', 'placeholder':'supervisor@example.com'}))
     admin_name = forms.CharField(label='agency admin', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'agency admin name'}))
-    admin_email = forms.CharField(label='agency admin email', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'pattern': '[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$', 'placeholder':'agency_admin@example.com'}))
+    admin_email = forms.CharField(label='agency admin email', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'pattern': '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,4}$', 'placeholder':'agency_admin@example.com'}))
     training_name = forms.CharField(label='training coordinator', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'training coordinator name'}))
-    training_email = forms.CharField(label='training coordinator email', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'pattern': '[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$', 'placeholder':'training_coord@example.com'}))
+    training_email = forms.CharField(label='training coordinator email', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'pattern': '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,4}$', 'placeholder':'training_coord@example.com'}))
 
     class Meta:
         model = Applicant
@@ -64,4 +64,4 @@ class ApplicationForm(forms.ModelForm):
 
     class Meta:
         model = Application
-        exclude = ['created', 'modified', 'applicant', 'position', 'author']
+        exclude = ['created', 'modified', 'applicant', 'position', 'author', 'e_applied', 'e_supervisor', 'e_training', 'e_admin', 'e_selected', 'a_supervisor', 'a_training', 'a_admin', 'r_supervisor', 'r_training', 'r_admin']

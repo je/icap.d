@@ -30,11 +30,12 @@ Applications for '{{ auser.email }}'
   <tbody>
 {% for a in applicant_applications %}
     <tr>
-      <td>{{ a.created|date:'Y-m-d' }}{% if a.modified and a.modified|date:'Y-m-d' != a.created|date:'Y-m-d' %} / {{ a.modified|date:'Y-m-d' }}{% endif %}</td>      <td><a href="{% url 'area_detail' a.position.team.area.slug %}">{{ a.position.team.area }}</a></td>
+      <td>{{ a.created|date:'Y-m-d' }}{% if a.modified and a.modified|date:'Y-m-d' != a.created|date:'Y-m-d' %} / {{ a.modified|date:'Y-m-d' }}{% endif %}</td>
+      <td><a href="{% url 'area_detail' a.position.team.area.slug %}">{{ a.position.team.area }}</a></td>
       <td><a href="{% url 'team_detail' a.position.team.area.slug a.position.team.slug %}">{{ a.position.team }}</a></td>
-      <td><a href="{% url 'position_detail' a.position.team.area.slug a.position.team.slug a.position.slug %}">{{ a.position }}</a></td>
+      <td><a href="{% url 'position_detail' a.position.team.area.slug a.position.team.slug a.position.slug %}">{{ a.position.name }}</a></td>
       <td>{{ a.get_consideration_display }}</td>
-      <td><mark class="alert-link p-0">{{ a.get_status_display }}</mark><span class="float-right small">{{ a.status_author}} on {{ a.statused|date:'Y-m-d'}}</span></td>
+      <td><mark class="alert-link p-0">{{ a.get_status_display }}</mark>{% if a.status_author and a.statused %}<span class="float-right small">{{ a.status_author}} on {{ a.statused|date:'Y-m-d'}}</span>{% endif %}</td>
     </tr>
 {% endfor %}
   </tbody>
@@ -135,7 +136,7 @@ Applications for '{{ auser.email }}'
             </div>
             <div class="col-sm">
             <div class="fieldWrapper">
-              <strong>iqcs:</strong>
+              <strong>iqcs/iqs:</strong>
               <input class="form-control form-control-sm" type="text" value="{{ applicant.iqcs }}" readonly>
             </div>
             </div>

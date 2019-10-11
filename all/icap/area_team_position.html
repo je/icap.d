@@ -16,11 +16,13 @@ label {
 
 {% block content %}
 
-{% if user.is_authenticated and perms.icap.add_applicationstatus %}
+{% load guardian_tags %}
+{% get_obj_perms request.user for position.team.area as "area_perms" %}
+{% if user.is_authenticated and "manage_area" in area_perms or user.is_authenticated and user.email in team_ics %}
 <div class="card mt-2 ml-2">
   <div class="card-header p-2">
       <h5 class="mb-0 float-left">
-        <a href="{% url 'area_detail' position.team.area.slug %}">{{ position.team.area }}</a> &sect; <a href="{% url 'team_detail' position.team.area.slug position.team.slug %}">{{ position.team }}</a> &sect; {{ position }}
+        <a href="{% url 'area_detail' position.team.area.slug %}">{{ position.team.area }}</a> &sect; <a href="{% url 'team_detail' position.team.area.slug position.team.slug %}">{{ position.team }}</a> &sect; {{ position.name }}
       </h5>
     <div class="float-right">
     <form class="needs-validation" id="positionstatus_form" method="POST" enctype="multipart/form-data" action="{% url 'position_detail' position.team.area.slug position.team.slug position.slug %}" novalidate>
@@ -69,7 +71,7 @@ label {
 {% for a in position_applications %}
     <tr>
       <td>{{ a.created|date:'Y-m-d' }}{% if a.modified and a.modified|date:'Y-m-d' != a.created|date:'Y-m-d' %} / {{ a.modified|date:'Y-m-d' }}{% endif %}</td>
-      <td><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.lastname|default_if_none:'--' }} {{ a.applicant.firstname|default_if_none:'--' }}</a></td>
+      <td><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.firstname|default_if_none:'--' }} {{ a.applicant.lastname|default_if_none:'--' }}</a></td>
       <td><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.author.email }}</a></td>
       <td>{{ a.get_consideration_display }}</td>
     <td class="form-inline">
@@ -78,7 +80,7 @@ label {
       <input type="hidden" name="application_{{ a.id }}" readonly value="{{ a.id }}">
       <select name="application_status_{{ a.id }}" class="form-control form-control-sm" id="id_application_status_{{ a.id }}">
         <option value=""{% if a.status == '' %} selected{% endif %}>--</option>
-        <option value="P"{% if a.status == 'P' %} selected{% endif %}">PRIMARY</option>
+        <option value="P"{% if a.status == 'P' %} selected{% endif %}>PRIMARY</option>
         <option value="S"{% if a.status == 'S' %} selected{% endif %}>SHARED</option>
         <option value="A"{% if a.status == 'A' %} selected{% endif %}>ALTERNATE</option>
         <option value="T"{% if a.status == 'T' %} selected{% endif %}>TRAINEE</option>
@@ -100,10 +102,20 @@ label {
 {% else %}
 <div class="card-body p-2">
 <div class="m-3">
-No applicants for this position. We should show a table of applicants to {{ position }} positions on all {{ position.team.area }} teams.
+No applicants for this position. We should show a table of applicants to {{ position.name }} positions on all {{ position.team.area }} teams.
 </div>
 </div>
 {% endif %}
+    {% if user.is_authenticated and "manage_area" in area_perms %}
+  <div class="card-footer p-2 small">
+    You are a coordinator for {{ position.team.area }} and can set open/close dates, view <a href="{% url 'area_applicants' position.team.area.slug %}">all applicants to area teams</a>, and select applicants into team positions.
+  </div>  
+    {% elif user.is_authenticated and user.email in team_ics %}
+  <div class="card-footer p-2 small">
+    You are an IC on {{ position.team }} and can set open/close dates, view <a href="{% url 'team_applicants' position.team.area.slug position.team.slug %}">all applicants to the team</a>, and select applicants into team positions.
+    }
+  </div>
+    {% endif %}
 </div>
 {% else %}
 
@@ -114,7 +126,7 @@ No applicants for this position. We should show a table of applicants to {{ posi
 
 {% if applicant.lastname is not none %}
   <h5 class="card-header p-2">
-    <a href="{% url 'area_detail' position.team.area.slug %}">{{ position.team.area }}</a> &sect; <a href="{% url 'team_detail' position.team.area.slug position.team.slug %}">{{ position.team }}</a> &sect; {{ position }}
+    <a href="{% url 'area_detail' position.team.area.slug %}">{{ position.team.area }}</a> &sect; <a href="{% url 'team_detail' position.team.area.slug position.team.slug %}">{{ position.team }}</a> &sect; {{ position.name }}
     <span class="float-right small">
     {% now "Y-m-d" as todays_date %}
     {% if position.open_date and position.close_date %}
@@ -151,27 +163,34 @@ No applicants for this position. We should show a table of applicants to {{ posi
     </span>
   </h5>
 
-{% if position_application or user.is_authenticated and not perms.icap.add_applicationstatus %}
+{% if position_application or user.is_authenticated and "manage_area" not in area_perms %}
   <div class="row ml-0 mr-0">
-  <div class='col-sm-4 p-2'>
-    <div class='card'>
-      <div class='card-body'>
-        <div class=''>
-        <h6><strong>Background</strong></h6>
-        </div>
-        <div class=''>
+    <div class='col-sm-4'>
+      <div class='card'>
+        <div class='card-body'>
+          <div class=''>
+            <h6><strong>Background</strong></h6>
+          </div>
+          <div class=''>
             The Incident Command Application was developed to facilitate Incident Management Teams in recruiting for and filling team positions. These positions are only for temporary assignments during an incident.<br/>
             <br/>
             All positions listed follow National Wildfire Coordination Group (NWCG) standard positions found in PMS 310-1 Wildland Fire Qualification System Guide. In order to apply to any position you must meet the qualifications and training as outlined in the 310-1 and be certified through your respective agency.<br/>
-            {% if not user.is_authenticated %}
-            <br>
-            <div class="alert alert-info">
-            If you need to <strong>apply to an incident management team position</strong>, <a href="{% url 'account_signup' %}" class="alert-link">sign up for an icap account</a> and then <a href="{% url 'account_login' %}" class="alert-link">login to ICAP</a>.</div>
-            {% endif %}
+          </div>
         </div>
       </div>
+      <div class='alert alert-info mt-4'>
+      {% if user.is_authenticated %}
+        <h6><strong>Directions</strong></h6>
+          <input type="checkbox" class="" disabled checked /> <strong>Step 1</strong>: <a class="alert-link" href="{% url 'account_signup' %}">Sign up for an icap account</a> at the <a class="alert-link" href="{% url 'account_signup' %}">signup page</a>.<br/>
+          <input type="checkbox" class="" disabled {% if applicant > 0 %}checked {% endif %}/> <strong>Step 2</strong>: <a class="alert-link" href="{% url 'applicant_update' %}">Add your applicant information</a> at the <a class="alert-link" href="{% url 'applicant_update' %}">applicant info form</a>.<br/>
+          <input type="checkbox" class="" disabled {% if applicant_applications > 0 %}checked {% endif %}/> <strong>Step 3</strong>: From the <a class="alert-link" href="{% url 'index' %}">home page</a>, browse to a region, team, and positon, fill out the application, and save the form. Your applications and their status are listed on your <a class="alert-link" href="{% url 'applicant_detail' request.user.email %}">applicant history page</a>.<br/>
+      {% else %}
+          <input type="checkbox" class="" disabled /> <strong>Step 1</strong>: <a class="alert-link" href="{% url 'account_signup' %}">Sign up for an icap account</a> at the <a class="alert-link" href="{% url 'account_signup' %}">signup page</a>.<br/>
+          <input type="checkbox" class="" disabled /> <strong>Step 2</strong>: <a class="alert-link" href="{% url 'applicant_update' %}">Add your applicant information</a> at the <a class="alert-link" href="{% url 'applicant_update' %}">applicant info form</a>.<br/>
+          <input type="checkbox" class="" disabled /> <strong>Step 3</strong>: From the <a class="alert-link" href="{% url 'index' %}">home page</a>, browse to a region, team, and positon, fill out the application, and save the form. Your applications and their status are listed on your applicant history page.<br/>
+      {% endif %}
+      </div>
     </div>
-  </div>
   <div class="col-sm-8 p-0">
 {% endif %}
 {% if position_application %}
@@ -201,26 +220,26 @@ No applicants for this position. We should show a table of applicants to {{ posi
       Applicant selected as <mark class="alert-link p-0">{{ position_application.get_status_display }}</mark></mark> by {{ position_application.status_author }} on {{ position_application.statused|date:'Y-m-d' }}.
   {% endif %}
 </div>
-{% elif user.is_authenticated and not perms.icap.add_applicationstatus %}
+{% elif user.is_authenticated and "manage_area" not in area_perms %}
 <div class="alert alert-info mt-2 ml-2 mr-2 mb-0 pl-2 pr-2 pb-1 pt-1">
   {% if position.open_date and position.close_date %}
    {% if position.open_date|date:'Y-m-d' <= todays_date and position.close_date|date:'Y-m-d' >= todays_date %}
    You have not applied to this position, and may apply using the application form below.
-   {% if position.team.area.name == 'Eastern' %} Remember to upload your '<mark class='text-success p-0'>Master Training and Experience Record</mark>' on your <a class="alert-link" href="{% url 'applicant_update' %}">applicant info</a> page.{% endif %}
+   {% if position.team.area.name == 'Eastern' %} Remember to upload your '<mark class='text-success font-weight-bold p-0'>Master Training and Experience Record</mark>' on your <a class="alert-link" href="{% url 'applicant_update' %}">applicant info</a> page.{% endif %}
    {% else %}
    You have not applied to this position. The application period for this position is closed. 
    {% endif %}
   {% elif position.team.open_date and position.team.close_date %}
    {% if position.team.open_date|date:'Y-m-d' <= todays_date and position.team.close_date|date:'Y-m-d' >= todays_date %}
    You have not applied to this position, and may apply using the application form below.
-   {% if position.team.area.name == 'Eastern' %} Remember to upload your '<mark class='text-success p-0'>Master Training and Experience Record</mark>' on your <a class="alert-link" href="{% url 'applicant_update' %}">applicant info</a> page.{% endif %}
+   {% if position.team.area.name == 'Eastern' %} Remember to upload your '<mark class='text-success font-weight-bold p-0'>Master Training and Experience Record</mark>' on your <a class="alert-link" href="{% url 'applicant_update' %}">applicant info</a> page.{% endif %}
    {% else %}
    You have not applied to this position. The application period for this position is closed. 
    {% endif %}
   {% elif position.team.area.open_date and position.team.area.close_date %}
    {% if position.team.area.open_date|date:'Y-m-d' <= todays_date and position.team.area.close_date|date:'Y-m-d' >= todays_date %}
    You have not applied to this position, and may apply using the application form below.
-   {% if position.team.area.name == 'Eastern' %} Remember to upload your '<mark class='text-success p-0'>Master Training and Experience Record</mark>' on your <a class="alert-link" href="{% url 'applicant_update' %}">applicant info</a> page.{% endif %}
+   {% if position.team.area.name == 'Eastern' %} Remember to upload your '<mark class='text-success font-weight-bold p-0'>Master Training and Experience Record</mark>' on your <a class="alert-link" href="{% url 'applicant_update' %}">applicant info</a> page.{% endif %}
    {% else %}
    You have not applied to this position. The application period for this position is closed. 
    {% endif %}

@@ -13,7 +13,9 @@
         <a href="{% url 'area_detail' team.area.slug %}">{{ team.area }}</a> &sect; {{ team }}
       </h5>
     <div class="float-right">
-    {% if user.is_authenticated and perms.icap.add_applicationstatus %}
+    {% load guardian_tags %}
+    {% get_obj_perms request.user for team.area as "area_perms" %}
+    {% if user.is_authenticated and "manage_area" in area_perms or user.is_authenticated and user.email in team_ics %}
     <form class="needs-validation" id="teamstatus_form" method="POST" enctype="multipart/form-data" action="{% url 'team_detail' team.area.slug team.slug %}" novalidate>
     {% csrf_token %}
     {% if team.open_date and team.close_date %}
@@ -40,27 +42,35 @@
   </div>
 <div class="card-body p-2">
   <div class="row">
-  <div class='col-sm-4 mb-2'>
-  <div class='card'>
-  <div class='card-body'>
-    <div class=''>
-    <h6><strong>Background</strong></h6>
+    <div class='col-sm-4'>
+      <div class='card'>
+        <div class='card-body'>
+          <div class=''>
+            <h6><strong>Background</strong></h6>
+          </div>
+          <div class=''>
+            The Incident Command Application was developed to facilitate Incident Management Teams in recruiting for and filling team positions. These positions are only for temporary assignments during an incident.<br/>
+            <br/>
+            All positions listed follow National Wildfire Coordination Group (NWCG) standard positions found in PMS 310-1 Wildland Fire Qualification System Guide. In order to apply to any position you must meet the qualifications and training as outlined in the 310-1 and be certified through your respective agency.<br/>
+          </div>
+        </div>
+      </div>
+      <div class='alert alert-info mt-4'>
+      {% if user.is_authenticated %}
+        <h6><strong>Directions</strong></h6>
+          <input type="checkbox" class="" disabled checked /> <strong>Step 1</strong>: <a class="alert-link" href="{% url 'account_signup' %}">Sign up for an icap account</a> at the <a class="alert-link" href="{% url 'account_signup' %}">signup page</a>.<br/>
+          <input type="checkbox" class="" disabled {% if applicant > 0 %}checked {% endif %}/> <strong>Step 2</strong>: <a class="alert-link" href="{% url 'applicant_update' %}">Add your applicant information</a> at the <a class="alert-link" href="{% url 'applicant_update' %}">applicant info form</a>.<br/>
+          <input type="checkbox" class="" disabled {% if applicant_applications > 0 %}checked {% endif %}/> <strong>Step 3</strong>: From the <a class="alert-link" href="{% url 'index' %}">home page</a>, browse to a region, team, and positon, fill out the application, and save the form. Your applications and their status are listed on your <a class="alert-link" href="{% url 'applicant_detail' request.user.email %}">applicant history page</a>.<br/>
+      {% else %}
+          <input type="checkbox" class="" disabled /> <strong>Step 1</strong>: <a class="alert-link" href="{% url 'account_signup' %}">Sign up for an icap account</a> at the <a class="alert-link" href="{% url 'account_signup' %}">signup page</a>.<br/>
+          <input type="checkbox" class="" disabled /> <strong>Step 2</strong>: <a class="alert-link" href="{% url 'applicant_update' %}">Add your applicant information</a> at the <a class="alert-link" href="{% url 'applicant_update' %}">applicant info form</a>.<br/>
+          <input type="checkbox" class="" disabled /> <strong>Step 3</strong>: From the <a class="alert-link" href="{% url 'index' %}">home page</a>, browse to a region, team, and positon, fill out the application, and save the form. Your applications and their status are listed on your applicant history page.<br/>
+      {% endif %}
+      </div>
     </div>
-    <div class=''>
-        The Incident Command Application was developed to facilitate Incident Management Teams in recruiting for and filling team positions. These positions are only for temporary assignments during an incident.<br/>
-        <br/>
-        All positions listed follow National Wildfire Coordination Group (NWCG) standard positions found in PMS 310-1 Wildland Fire Qualification System Guide. In order to apply to any position you must meet the qualifications and training as outlined in the 310-1 and be certified through your respective agency.<br/>
-        {% if not user.is_authenticated %}
-        <br>
-        <div class="alert alert-info">
-        If you need to <strong>apply to an incident management team position</strong>, <a href="{% url 'account_signup' %}" class="alert-link">sign up for an icap account</a> and then <a href="{% url 'account_login' %}" class="alert-link">login to ICAP</a>.</div>
-        {% endif %}
-    </div>
-  </div>
-  </div>
-</div>
 <div class="col-sm-8">
   <div class="card">
+<h5 class="card-header p-2"><strong>Select a position below to apply</strong></h5>
 <div class="card-body p-2 bg-secondary">
 <table class="table table-bordered table-sm mb-0 bg-white">
   <thead>
@@ -68,19 +78,45 @@
       <th scope="col">Code</th>
       <th scope="col">Position</th>
       <th scope="col">Application Period</th>
+      {% if user.is_authenticated and "manage_area" in area_perms or user.is_authenticated and user.email in team_ics %}
+      <th>Application Count</th>
+      <th>Selected Primary</th>
+      <th>Selected Trainee</th>
+      {% endif %}
     </tr>
   </thead>
   <tbody>
 {% for p in team_positions %}
+    {% ifchanged p.id %}
+    {% now "Y-m-d" as todays_date %}
     <tr>
       <td><a href="{% url 'position_detail' team.area.slug team.slug p.slug %}">{{ p.code }}</a></td>
       <td><a href="{% url 'position_detail' team.area.slug team.slug p.slug %}">{{ p.name }}</a></td>
-      <td>{% if p.open_date and p.close_date %}{{ p.open_date|date:'Y-m-d' }} to {{ p.close_date|date:'Y-m-d' }}{% elif team.open_date and team.close_date %}{{ team.open_date|date:'Y-m-d' }} to {{ team.close_date|date:'Y-m-d' }}{% elif team.area.open_date and team.area.close_date %}{{ team.area.open_date|date:'Y-m-d' }} to {{ team.area.close_date|date:'Y-m-d' }}{% endif %}</td>
+      <td class="{% if p.open_date and p.close_date %}{% if p.open_date|date:'Y-m-d' <= todays_date and p.close_date|date:'Y-m-d' >= todays_date %}font-weight-bold text-success{% endif %}{% elif team.open_date and team.close_date %}{% if team.open_date|date:'Y-m-d' <= todays_date and team.close_date|date:'Y-m-d' >= todays_date %}font-weight-bold text-success{% endif %}{% elif team.area.open_date and team.area.close_date %}
+     {% if team.area.open_date|date:'Y-m-d' <= todays_date and team.area.close_date|date:'Y-m-d' >= todays_date %}
+     font-weight-bold text-success{% endif %}{% endif %}
+    ">{% if p.open_date and p.close_date %}{{ p.open_date|date:'Y-m-d' }} to {{ p.close_date|date:'Y-m-d' }}{% elif team.open_date and team.close_date %}{{ team.open_date|date:'Y-m-d' }} to {{ team.close_date|date:'Y-m-d' }}{% elif team.area.open_date and team.area.close_date %}{{ team.area.open_date|date:'Y-m-d' }} to {{ team.area.close_date|date:'Y-m-d' }}{% else %}not specified{% endif %}</td>
+      {% if user.is_authenticated and "manage_area" in area_perms or user.is_authenticated and user.email in team_ics %}
+      <td><a class="float-right" href="{% url 'position_detail' team.area.slug team.slug p.slug %}">{{ p.num_apps }}</a></td>
+      <td>{% if p.primary %}{% for s in p.primary %}<a href="{% url 'applicant_detail' s %}">{{ s|default_if_none:"--" }}</a> {% endfor %}{% endif %}</td>
+      <td>{% if p.trainee %}{% for s in p.trainee %}<a href="{% url 'applicant_detail' s %}">{{ s|default_if_none:"--" }}</a> {% endfor %}{% endif %}</td>
+      {% endif %}
     </tr>
+    {% endifchanged %}
 {% endfor %}
   </tbody>
 </table>
 </div>
+    {% if user.is_authenticated and "manage_area" in area_perms or user.is_authenticated and user.email in team_ics %}
+  <div class="card-footer p-2 small">
+    You are a coordinator for {{ team.area }} and can set open/close dates, view <a href="{% url 'area_applicants' team.area.slug %}">all applicants to area teams</a>, and select applicants into team positions.
+  </div>  
+    {% elif user.is_authenticated and user.email in team_ics %}
+  <div class="card-footer p-2 small">
+    You are an IC on {{ team }} and can set open/close dates, view <a href="{% url 'team_applicants' team.area.slug team.slug %}">all applicants to the team</a>, and select applicants into team positions.
+    }
+  </div>
+    {% endif %}
 </div>
 </div>
 </div>

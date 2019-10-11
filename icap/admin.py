@@ -1,4 +1,5 @@
 from django.contrib import admin
+from guardian.admin import GuardedModelAdmin
 
 from icap.models import *
 
@@ -11,7 +12,7 @@ class LogitemAdmin(admin.ModelAdmin):
 
 admin.site.register(Logitem, LogitemAdmin)
 
-class AreaUSAdmin(admin.ModelAdmin):
+class AreaUSAdmin(GuardedModelAdmin):
     date_hierarchy = 'created'
     list_display = ('name', 'slug', 'open_date', 'close_date', 'contact', 'phone', 'deleted',)
     ordering = ['name',]
@@ -37,6 +38,7 @@ class PositionAdmin(admin.ModelAdmin):
     list_per_page = 50
     list_filter = ('team__area', 'team', 'code', 'deleted',)
     list_display_links = ('code', 'name',)
+    list_editable = ('open_date', 'close_date',)
     save_as = True
 
     def team_area(self, obj):
@@ -79,10 +81,10 @@ admin.site.register(Category, CategoryAdmin)
 
 class ApplicantAdmin(admin.ModelAdmin):
     date_hierarchy = 'created'
-    list_display = ('firstname', 'lastname', 'area', 'category', 'host_agency')
+    list_display = ('firstname', 'lastname', 'author', 'area', 'category', 'host_agency')
     list_per_page = 50
     list_filter = ('area', 'category')
-    list_display_links = ('firstname', 'lastname',)
+    list_display_links = ('firstname', 'lastname','author')
     save_as = True
 
 admin.site.register(Applicant, ApplicantAdmin)
@@ -186,3 +188,13 @@ class ApplicationStatusAdmin(admin.ModelAdmin):
     application_position_team_area.short_description = 'Area'
 
 admin.site.register(ApplicationStatus, ApplicationStatusAdmin)
+
+class LegacyApplicantAdmin(admin.ModelAdmin):
+    date_hierarchy = 'created'
+    list_display = ('firstname', 'lastname', 'area', 'category', 'host_agency')
+    list_per_page = 50
+    list_filter = ('area', 'category')
+    list_display_links = ('firstname', 'lastname',)
+    save_as = True
+
+admin.site.register(LegacyApplicant, LegacyApplicantAdmin)

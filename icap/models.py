@@ -44,6 +44,7 @@ CONSIDERATION_CHOICES = (
     ('S', 'SHARED'),
     ('A', 'ALTERNATE'),
     ('T', 'TRAINEE'),
+    ('C', 'APPRENTICE'),
     ('W', 'WITHDRAWN'),
 )
 
@@ -52,6 +53,7 @@ APPLICATION_STATUS_CHOICES = (
     ('S', 'SHARED'),
     ('A', 'ALTERNATE'),
     ('T', 'TRAINEE'),
+    ('C', 'APPRENTICE'),
     ('R', 'REJECTED'),
     ('W', 'WITHDRAWN'),
 )
@@ -84,6 +86,11 @@ class AreaUS(models.Model):
     contact = models.CharField('contact', max_length=80, blank=True, null=True, help_text="")
     phone = models.CharField('phone', max_length=20, blank=True, null=True, help_text="")
     remarks = models.TextField('remarks', max_length=10240, blank=True, null=True, help_text="", )
+    e_applied = models.TextField('email applied', max_length=10240, blank=True, null=True, help_text="", )
+    e_supervisor = models.TextField('email supervisor', max_length=10240, blank=True, null=True, help_text="", )
+    e_training = models.TextField('email training', max_length=10240, blank=True, null=True, help_text="", )
+    e_admin = models.TextField('email admin', max_length=10240, blank=True, null=True, help_text="", )
+    e_selected = models.TextField('email selected', max_length=10240, blank=True, null=True, help_text="", )
     tags = TaggableManager(blank=True,)
 
     class Meta:
@@ -91,6 +98,9 @@ class AreaUS(models.Model):
         verbose_name = _('area')
         verbose_name_plural = _('areas')
         ordering = ('name',)
+        permissions = (
+            ('manage_area', 'Manage area'),
+        )
 
     def __str__(self):
         return u"%s" % (self.name)
@@ -148,10 +158,10 @@ class Position(models.Model):
         db_table = 'icap_position'
         verbose_name = _('position')
         verbose_name_plural = _('positions')
-        ordering = ('name',)
+        ordering = ('team__area','team','name',)
 
     def __str__(self):
-        return u"%s" % (self.name)
+        return u"%s %s %s" % (self.team.area, self.team, self.name)
 
     def get_absolute_url(self):
         return "/%s/%s/%s/" % (self.team.area.slug, self.team.slug, self.slug)
@@ -209,7 +219,7 @@ class Applicant(models.Model):
     #pager = models.CharField('pager', max_length=20, blank=True, null=True, help_text="")
     #fax = models.CharField('fax phone', max_length=20, blank=True, null=True, help_text="")
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="applicant_category", null=True)
-    iqcs = models.CharField('iqcs', max_length=80, blank=True, null=True, help_text="")
+    iqcs = models.CharField('iqcs/iqs', max_length=80, blank=True, null=True, help_text="")
     qualifications = models.TextField('qualifications', max_length=10240, blank=True, null=True, help_text="", )
     dispatch_office = models.CharField('dispatch office', max_length=80, blank=True, null=True, help_text="")
     #dispatch = models.CharField('dispatch phone', max_length=20, blank=True, null=True, help_text="")
@@ -269,6 +279,17 @@ class Application(models.Model):
     status = models.CharField('status', max_length=1, choices=APPLICATION_STATUS_CHOICES, blank=True, null=True)
     status_author = models.ForeignKey(User, on_delete=models.PROTECT, blank=True, null=True, related_name="application_status_author")
     statused = models.DateTimeField('statused', blank=True, null=True)
+    e_applied = models.DateTimeField('emailed applied', blank=True, null=True)
+    e_supervisor = models.DateTimeField('emailed supervisor', blank=True, null=True)
+    e_training = models.DateTimeField('emailed training', blank=True, null=True)
+    e_admin = models.DateTimeField('emailed admin', blank=True, null=True)
+    e_selected = models.DateTimeField('emailed selected', blank=True, null=True)
+    a_supervisor = models.DateTimeField('approved supervisor', blank=True, null=True)
+    a_training = models.DateTimeField('approved training', blank=True, null=True)
+    a_admin = models.DateTimeField('approved admin', blank=True, null=True)
+    r_supervisor = models.EmailField('supervisor email', max_length=80, blank=True, null=True, help_text="")
+    r_training = models.EmailField('training email', max_length=80, blank=True, null=True, help_text="")
+    r_admin = models.EmailField('admin email', max_length=80, blank=True, null=True, help_text="")
 
     class Meta:
         db_table = 'icap_application'
@@ -295,3 +316,46 @@ class ApplicationStatus(models.Model):
 
     def __str__(self):
         return u"%s" % (self.status)
+
+class LegacyApplicant(models.Model):
+    created = models.DateTimeField('created', auto_now_add=True, blank=True, null=True)
+    modified = models.DateTimeField('modified', auto_now=True, blank=True, null=True)
+    deleted = models.NullBooleanField('delete?')
+    author = models.ForeignKey(User, on_delete=models.PROTECT, blank=True, null=True)
+    firstname = models.CharField('firstname', max_length=80, blank=True, null=True, help_text="")
+    lastname = models.CharField('lastname', max_length=80, blank=True, null=True, help_text="")
+    eauthid = models.CharField('eauth id', max_length=80, blank=True, null=True, help_text="")
+    area = models.ForeignKey(AreaUS, on_delete=models.PROTECT, related_name="legacy_applicant_area", null=True)
+    city = models.CharField('city', max_length=80, blank=True, null=True, help_text="")
+    state = models.CharField('state', max_length=2, blank=True, null=True, help_text="")
+    #zipcode = models.CharField('zip', max_length=10, blank=True, null=True, help_text="")
+    email = models.EmailField('email', max_length=80, blank=True, null=True, help_text="")
+    work = models.CharField('work phone', max_length=40, blank=True, null=True, help_text="")
+    home = models.CharField('home phone', max_length=40, blank=True, null=True, help_text="")
+    cell = models.CharField('cell phone', max_length=40, blank=True, null=True, help_text="")
+    #pager = models.CharField('pager', max_length=20, blank=True, null=True, help_text="")
+    #fax = models.CharField('fax phone', max_length=20, blank=True, null=True, help_text="")
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="legacy_applicant_category", null=True)
+    iqcs = models.CharField('iqcs', max_length=80, blank=True, null=True, help_text="")
+    qualifications = models.TextField('qualifications', max_length=30240, blank=True, null=True, help_text="", )
+    dispatch_office = models.CharField('dispatch office', max_length=80, blank=True, null=True, help_text="")
+    #dispatch = models.CharField('dispatch phone', max_length=20, blank=True, null=True, help_text="")
+    host_agency = models.CharField('host agency', max_length=120, blank=True, null=True, help_text="")
+    #host_address = models.CharField('host agency', max_length=80, blank=True, null=True, help_text="")
+    supervisor_name = models.CharField('supervisor name', max_length=80, blank=True, null=True, help_text="")
+    supervisor_email = models.EmailField('supervisor email', max_length=80, blank=True, null=True, help_text="")
+    admin_name = models.CharField('admin name', max_length=80, blank=True, null=True, help_text="")
+    admin_email = models.EmailField('admin email', max_length=80, blank=True, null=True, help_text="")
+    training_name = models.CharField('training name', max_length=80, blank=True, null=True, help_text="")
+    training_email = models.EmailField('training email', max_length=80, blank=True, null=True, help_text="")
+    remarks = models.TextField('remarks', max_length=10240, blank=True, null=True, help_text="", )
+
+    class Meta:
+        db_table = 'icap_legacy_applicant'
+        verbose_name = _('legacy applicant')
+        verbose_name_plural = _('legacy applicants')
+        ordering = ('lastname','firstname',)
+
+    def __str__(self):
+        return u"%s %s" % (self.firstname, self.lastname)
+
