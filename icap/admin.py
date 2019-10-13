@@ -198,3 +198,13 @@ class LegacyApplicantAdmin(admin.ModelAdmin):
     save_as = True
 
 admin.site.register(LegacyApplicant, LegacyApplicantAdmin)
+
+class UnitAdmin(admin.ModelAdmin):
+    date_hierarchy = 'created'
+    list_display = ('name', 'slug', 'wildlandrole', 'unitid', 'unittype', 'deleted',)
+    ordering = ['name',]
+    list_per_page = 50
+    list_filter = ('wildlandrole','nation')
+    save_as = True
+
+admin.site.register(Unit, UnitAdmin)

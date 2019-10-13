@@ -1,8 +1,10 @@
+import os
 import datetime
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required, permission_required
-from django.db.models import Case, When, Q, F, Count
+from django.db.models import Case, When, Q, F, Count, Value
+#from django.db.models.functions import Replace
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.forms.models import inlineformset_factory
@@ -10,6 +12,7 @@ from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.core.mail import send_mail, send_mass_mail, mail_managers
 #from django.views.decorators.cache import cache_page
 from django.conf import settings
+from django.template.loader import render_to_string
 from guardian.shortcuts import assign, get_users_with_perms, get_objects_for_user, remove_perm
 from icap.models import *
 from icap.forms import *
@@ -409,3 +412,49 @@ def ApplicantUpdate(request):
         fileformset = None
 
     return render(request, 'icap/applicant_update.html', {'applicant': applicant, 'form': form, 'fileformset': fileformset,})
+
+def Units(request):
+    if request.user.is_superuser:
+        path = '/home/ordvac/webapps/icap_ordvac_s/'
+        os.makedirs(path, exist_ok=True)
+        #units = Unit.objects.filter(deleted__isnull=False)
+        #chars = ['\'', '-', '&']
+        #query = Q()
+        #for char in chars:
+        #    query = query | Q(name__icontains=char)
+        #Unit.objects.filter(query).update(
+        #    string_field=Replace('name', Value('\''), Value(''))
+        #)
+        #ok = Unit.objects.filter(query).update(name=self.name.replace('\'','').replace('-',' ').replace('&','and'))
+        
+        units = Unit.objects.exclude(deleted__isnull=False)
+        if units:
+            context = { 'units': units }
+            content = render_to_string('icap/unit.csv', context)           
+            with open(path + 'unit.csv', 'w') as static_file:
+                static_file.write(content)
+            content = render_to_string('icap/unit.json', context)           
+            with open(path + 'unit.json', 'w') as static_file:
+                static_file.write(content)
+                msg = 'Unit file written to <a href="/s/unit.csv">/s/unit.csv</a> and <a href="/s/unit.json">/s/unit.json</a>.'
+            messages.info(request, msg)
+            #l = Logitem(author=request.user, status='S', message=msg, obj_model='Fire', obj_id='', obj_in='', obj_out='',)
+            #l.save()
+        dispatch = Unit.objects.filter(wildlandrole__iexact='Dispatch/Coordination Center').exclude(deleted__isnull=False)#.annotate(clean=unit.replace('\'','').replace('-',' ').replace('&','and'))
+        if dispatch:
+            context = { 'units': dispatch }
+            content = render_to_string('icap/dispatch.csv', context)           
+            with open(path + 'dispatch.csv', 'w') as static_file:
+                static_file.write(content)
+            content = render_to_string('icap/dispatch.json', context)           
+            with open(path + 'dispatch.json', 'w') as static_file:
+                static_file.write(content)
+                msg = 'Dispatch file written to <a href="/s/dispatch.csv">/s/dispatch.csv</a> and <a href="/s/dispatch.json">/s/dispatch.json</a>.'
+            messages.info(request, msg)
+            #l = Logitem(author=request.user, status='S', message=msg, obj_model='Fire', obj_id='', obj_in='', obj_out='',)
+            #l.save()
+        #msg = 'Unit and dispatch files written.'
+        #messages.info(request, msg)
+        return HttpResponseRedirect('/')
+    else:
+        return HttpResponseRedirect('/')

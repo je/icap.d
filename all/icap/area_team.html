@@ -14,6 +14,7 @@
       </h5>
     <div class="float-right">
     {% load guardian_tags %}
+    {% load tags %}
     {% get_obj_perms request.user for team.area as "area_perms" %}
     {% if user.is_authenticated and "manage_area" in area_perms or user.is_authenticated and user.email in team_ics %}
     <form class="needs-validation" id="teamstatus_form" method="POST" enctype="multipart/form-data" action="{% url 'team_detail' team.area.slug team.slug %}" novalidate>
@@ -55,7 +56,16 @@
           </div>
         </div>
       </div>
+     {% if team.directions %}
       <div class='alert alert-info mt-4'>
+        {{ area.directions|md }}
+      </div>
+     {% elif team.area.directions %}
+      <div class='alert alert-info mt-4'>
+        {{ team.area.directions|md }}
+      </div>
+     {% endif %}
+       <div class='alert alert-info mt-4'>
       {% if user.is_authenticated %}
         <h6><strong>Directions</strong></h6>
           <input type="checkbox" class="" disabled checked /> <strong>Step 1</strong>: <a class="alert-link" href="{% url 'account_signup' %}">Sign up for an icap account</a> at the <a class="alert-link" href="{% url 'account_signup' %}">signup page</a>.<br/>

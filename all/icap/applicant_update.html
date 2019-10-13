@@ -11,6 +11,73 @@
 label {
     font-weight: bolder;
 }
+{% if request.user.is_superuser %}
+.typeahead,
+.tt-query,
+.tt-hint {
+  width: 396px;
+  height: 30px;
+  padding: 8px 12px;
+  border: 2px solid #ccc;
+  -webkit-border-radius: 8px;
+     -moz-border-radius: 8px;
+          border-radius: 8px;
+  outline: none;
+}
+
+.typeahead {
+  background-color: #fff;
+}
+
+.typeahead:focus {
+  border: 2px solid #0097cf;
+}
+
+.tt-query {
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+     -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+          box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+}
+
+.tt-hint {
+  color: #999
+}
+
+.tt-menu {
+  width: 422px;
+  margin: 12px 0;
+  padding: 8px 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  -webkit-border-radius: 8px;
+     -moz-border-radius: 8px;
+          border-radius: 8px;
+  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+     -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+          box-shadow: 0 5px 10px rgba(0,0,0,.2);
+}
+
+.tt-suggestion {
+  padding: 3px 20px;
+}
+
+.tt-suggestion:hover {
+  cursor: pointer;
+  color: #fff;
+  background-color: #0097cf;
+}
+
+.tt-suggestion.tt-cursor {
+  color: #fff;
+  background-color: #0097cf;
+
+}
+
+.tt-suggestion p {
+  margin: 0;
+}
+{% endif %}
 </style>
 {% endblock %}
 
@@ -103,9 +170,10 @@ label {
             <div class="col-sm">
             <div class="fieldWrapper">
               {{ form.dispatch_office.errors }}
-              {{ form.dispatch_office.label_tag }}
-              {{ form.dispatch_office }}
-              <span class="helptext">{{ form.dispatch_office.help_text }}</span>
+            <label>dispatch office:</label>
+            <div id="prefetch">
+              <input id="id_dispatch_office" name="dispatch_office" class="typeahead form-control form-control-sm" type="text" value="{{ form.dispatch_office.value }}" placeholder="dispatch office" maxlength="80" required="">
+            </div>
             </div>
             </div>
           </div>
@@ -286,6 +354,23 @@ label {
 {% block endscripts %}
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.min.js"></script>
+  <script>
+  var dispatch = new Bloodhound({
+    datumTokenizer: Bloodhound.tokenizers.whitespace,
+    queryTokenizer: Bloodhound.tokenizers.whitespace,
+    prefetch: '/s/d.json'
+  });
+
+  $('#prefetch .typeahead').typeahead({
+    hint: true,
+    highlight: true,
+    minLength: 1
+  }, {
+    name: 'dispatch',
+    source: dispatch
+  });
+  </script>
   <script>
 (function() {
   'use strict';

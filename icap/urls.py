@@ -8,6 +8,7 @@ from django.views.decorators.cache import cache_page
 urlpatterns = [
     path('', Index, name='index'),
     path('feedback/', Feedback, name='feedback'),
+    path('units/', Units, name='units'),
     path('applicant/', ApplicantUpdate, name='applicant_update'),
     re_path(r'^applicant/(?P<applicant_user_email>[^@\s]+@[^@\s]+\.[^@\s]+)/$', ApplicantDetail, name='applicant_detail'),
     re_path(r'^(?P<area_slug>[a-zA-Z0-9_\- ]+)/$', AreaDetail, name='area_detail'),

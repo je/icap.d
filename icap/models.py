@@ -86,6 +86,7 @@ class AreaUS(models.Model):
     contact = models.CharField('contact', max_length=80, blank=True, null=True, help_text="")
     phone = models.CharField('phone', max_length=20, blank=True, null=True, help_text="")
     remarks = models.TextField('remarks', max_length=10240, blank=True, null=True, help_text="", )
+    directions = models.TextField('directions', max_length=10240, blank=True, null=True, help_text="", )
     e_applied = models.TextField('email applied', max_length=10240, blank=True, null=True, help_text="", )
     e_supervisor = models.TextField('email supervisor', max_length=10240, blank=True, null=True, help_text="", )
     e_training = models.TextField('email training', max_length=10240, blank=True, null=True, help_text="", )
@@ -118,6 +119,7 @@ class Team(models.Model):
     area = models.ForeignKey(AreaUS, on_delete=models.PROTECT, related_name="team_area")
     open_date = models.DateTimeField('effective open', blank=True, null=True, help_text="")
     close_date = models.DateTimeField('effective close', blank=True, null=True, help_text="")
+    directions = models.TextField('directions', max_length=10240, blank=True, null=True, help_text="", )
     remarks = models.TextField('remarks', max_length=10240, blank=True, null=True, help_text="", )
     pool = models.NullBooleanField('allow selection to any area team?')
     tags = TaggableManager(blank=True,)
@@ -221,7 +223,7 @@ class Applicant(models.Model):
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="applicant_category", null=True)
     iqcs = models.CharField('iqcs/iqs', max_length=80, blank=True, null=True, help_text="")
     qualifications = models.TextField('qualifications', max_length=10240, blank=True, null=True, help_text="", )
-    dispatch_office = models.CharField('dispatch office', max_length=80, blank=True, null=True, help_text="")
+    dispatch_office = models.CharField('dispatch office', max_length=120, blank=True, null=True, help_text="")
     #dispatch = models.CharField('dispatch phone', max_length=20, blank=True, null=True, help_text="")
     host_agency = models.CharField('host agency', max_length=80, blank=True, null=True, help_text="")
     #host_address = models.CharField('host agency', max_length=80, blank=True, null=True, help_text="")
@@ -358,4 +360,42 @@ class LegacyApplicant(models.Model):
 
     def __str__(self):
         return u"%s %s" % (self.firstname, self.lastname)
+
+class Unit(models.Model):
+    created = models.DateTimeField('created', auto_now_add=True)
+    modified = models.DateTimeField('modified', auto_now=True, blank=True, null=True)
+    deleted = models.DateTimeField('deleted', blank=True, null=True)
+    author = models.ForeignKey(User, on_delete=models.PROTECT, related_name="unit_author")
+    name = models.CharField('name', max_length=120, blank=True, null=True, help_text="")
+    slug = models.CharField('slug', max_length=120, blank=True, null=True, help_text="")
+    unitid = models.CharField('unitid', max_length=20, blank=True, null=True, help_text="")
+    unittype = models.CharField('unittype', max_length=80, blank=True, null=True, help_text="")
+    wildlandrole = models.CharField('wildlandrole', max_length=40, blank=True, null=True, help_text="")
+    garea = models.CharField('garea', max_length=20, blank=True, null=True, help_text="")
+    gacc = models.CharField('gacc', max_length=20, blank=True, null=True, help_text="")
+    dept = models.CharField('dept', max_length=20, blank=True, null=True, help_text="")
+    agency = models.CharField('agency', max_length=20, blank=True, null=True, help_text="")
+    parent = models.CharField('parent', max_length=20, blank=True, null=True, help_text="")
+    orgcode = models.CharField('orgcode', max_length=40, blank=True, null=True, help_text="")
+    code = models.CharField('code', max_length=20, blank=True, null=True, help_text="")
+    state = models.CharField('state', max_length=20, blank=True, null=True, help_text="")
+    nation = models.CharField('nation', max_length=20, blank=True, null=True, help_text="")
+    address = models.CharField('address', max_length=180, blank=True, null=True, help_text="")
+    phone = models.CharField('phone', max_length=20, blank=True, null=True, help_text="")
+    email = models.EmailField('email', max_length=80, blank=True, null=True, help_text="")
+    remarks = models.TextField('remarks', max_length=10240, blank=True, null=True, help_text="", )
+    removalreason = models.TextField('removalreason', max_length=10240, blank=True, null=True, help_text="", )
+    tags = TaggableManager(blank=True,)
+
+    class Meta:
+        db_table = 'icap_unit'
+        verbose_name = _('unit')
+        verbose_name_plural = _('units')
+        ordering = ('name',)
+
+    def __str__(self):
+        return u"%s" % (self.name)
+
+    def get_absolute_url(self):
+        return "/unit/%s/" % (self.slug)
 
