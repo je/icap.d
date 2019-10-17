@@ -1,0 +1,34 @@
+[{% for a in area_applicants %}
+{
+    "model": "icap.applicant",
+    "fields": {
+        "created": "{{a.created|date:'Y-m-d H:i:s T'}}",
+        "modified": "{{a.modified|date:'Y-m-d H:i:s T'}}",
+        "firstname": "{{a.applicant.firstname|default:'--'|default_if_none:'--'}}",
+        "lastname": "{{a.applicant.lastname|default:'--'|default_if_none:'--'}}",
+        "area": "{{a.applicant.area.name|default:'--'|default_if_none:'--'}}",
+        "category": "{{a.applicant.category|default:'--'|default_if_none:'--'}}",
+        "host_agency": "{{a.applicant.host_agency|default:'--'|default_if_none:'--'}}",
+        "city": "{{a.applicant.city|default:'--'|default_if_none:'--'}}",
+        "state": "{{a.applicant.state|default:'--'|default_if_none:'--'}}",
+        "dispatch_office": "{{a.applicant.dispatch_office|default:'--'|default_if_none:'--'}}",
+        "iqcs": "{{a.applicant.iqcs|default:'--'|default_if_none:'--'}}",
+        "supervisor": "{{a.applicant.supervisor_name|default:'--'|default_if_none:'--'}} {{a.applicant.supervisor_email|default:'--'|default_if_none:'--'}}",
+        "admin": "{{a.applicant.admin_name|default:'--'|default_if_none:'--'}} {{a.applicant.admin_email|default:'--'|default_if_none:'--'}}",
+        "training": "{{a.applicant.training_name|default:'--'|default_if_none:'--'}} {{a.applicant.training_email|default:'--'|default_if_none:'--'}}",
+        "work": "{{a.applicant.work|default:'--'|default_if_none:'--'}}",
+        "home": "{{a.applicant.home|default:'--'|default_if_none:'--'}}",
+        "cell": "{{a.applicant.cell|default:'--'|default_if_none:'--'}}",
+        "qualifications": "{{a.applicant.qualifications|default:'--'|default_if_none:'--'|escapejs}}",
+        "remarks": "{{a.applicant.remarks|default:'--'|default_if_none:'--'|escapejs}}",
+        "team": "{{a.position.team|default:'--'|default_if_none:'--'}}",
+        "position": "{{a.position.name|default:'--'|default_if_none:'--'}}",
+        "consideration": "{{a.get_consideration_display|default:'--'|default_if_none:'--'}}",
+        "application_qualifications": "{{a.qualifications|default:'--'|default_if_none:'--'|escapejs}}",
+        "application_remarks": "{{a.remarks|default:'--'|default_if_none:'--'|escapejs}}",
+        "application_status": "{{a.get_status_display|default:'--'|default_if_none:'--'}}",
+        "status_author": "{{a.status_author|default:'--'|default_if_none:'--'}}",
+        "status_date": "{{a.statused|default:'--'|default_if_none:'--'|date:'Y-m-d H:i:s T'}}"
+    }
+}{% if forloop.last %}{% else %},{% endif %}{% endfor %}
+]

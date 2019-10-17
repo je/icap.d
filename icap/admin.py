@@ -119,7 +119,7 @@ class ApplicationAdmin(admin.ModelAdmin):
     date_hierarchy = 'created'
     list_display = ('application_applicant_firstname', 'application_applicant_lastname', 'position_team_area', 'position_team', 'position', 'consideration', 'status',)
     list_per_page = 50
-    list_filter = ('position__team__area', 'status',)
+    list_filter = ('position__team__area', 'consideration','status',)
     list_display_links = ('application_applicant_firstname', 'application_applicant_lastname',)
     save_as = True
 

@@ -77,7 +77,7 @@
   </div>
     {% if user.is_authenticated and "manage_area" in area_perms %}
   <div class="card-footer p-2 small">
-    You are a coordinator for {{ area }} and can set open/close dates, view <a href="{% url 'area_applicants' area.slug %}">all applicants to area teams</a>, and select applicants into team positions.
+    You are a coordinator for {{ area }} and can set open/close dates, <a href="{% url 'area_applicants' area.slug %}">view all applicants</a> to area teams, <a href="{% url 'area_applicants_reports' area.slug %}">generate csv/json exports of all applicants</a> to area teams, and select applicants into team positions.
   </div>  
     {% endif %}
   </div>

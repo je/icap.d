@@ -1,5 +1,6 @@
 import os
 import datetime
+import uuid
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required, permission_required
@@ -9,13 +10,15 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.forms.models import inlineformset_factory
 from django.contrib.auth.signals import user_logged_in, user_logged_out
-from django.core.mail import send_mail, send_mass_mail, mail_managers
+from django.core.mail import send_mail, send_mass_mail, mail_managers, EmailMessage
 #from django.views.decorators.cache import cache_page
 from django.conf import settings
 from django.template.loader import render_to_string
 from guardian.shortcuts import assign, get_users_with_perms, get_objects_for_user, remove_perm
 from icap.models import *
 from icap.forms import *
+
+fs = FileSystemStorage(location=settings.UFS)
 
 def Feedback(request):
     when = datetime.datetime.now()
@@ -85,6 +88,43 @@ def AreaApplicants(request, area_slug):
             Q(position__team__area__slug__iexact=area_slug)
             ).exclude(deleted=True).select_related('applicant')
         return render(request, 'icap/area_applicants.html', {'area': area_, 'area_applicants': area_applicants,})
+    else:
+        return HttpResponseRedirect('/%s/' % (area_.slug))
+
+def AreaApplicantsReports(request, area_slug):
+    created = datetime.datetime.utcnow()
+    created = created.strftime("%Y-%m-%dT%H:%M:%S")
+    area_ = get_object_or_404(AreaUS, slug__iexact=area_slug)
+    if request.user.has_perm('icap.manage_area', area_):
+        exports = settings.STATIC_ROOT + '/exports/'
+        if not os.path.exists(exports):
+            os.makedirs(exports)
+        area_applicants = Application.objects.filter(
+            Q(position__team__area__slug__iexact=area_slug)
+            ).exclude(deleted=True).select_related('applicant')
+        if area_applicants:
+            context = { 'area_applicants': area_applicants }
+            content = render_to_string('icap/area_applicants.csv', context)
+            nominal = area_slug + '-' + created
+            filename = nominal + str(uuid.uuid4())
+
+            msg = 'Area applicant reports written to <a class="alert-link" href="/s/exports/' + filename + '.csv">/s/exports/' + nominal + '.csv</a> and <a class="alert-link" href="/s/exports/' + filename + '.json">/s/exports/' + nominal + '.json</a>, and emailed to <strong>' + request.user.email + '</strong>.'
+            email = EmailMessage(
+                'icap applicant report', msg, None, [request.user.email])
+            with open(exports + filename + '.csv', 'w') as static_file:
+                static_file.write(content)
+            email.attach_file(exports + filename + '.csv')
+            content = render_to_string('icap/area_applicants.json', context)           
+            with open(exports + filename + '.json', 'w') as static_file:
+                static_file.write(content)
+            email.attach_file(exports + filename + '.json')
+            email.send()
+            messages.info(request, msg)
+            #l = Logitem(author=request.user, status='S', message=msg, obj_model='Fire', obj_id='', obj_in='', obj_out='',)
+            #l.save()
+        #msg = 'Unit and dispatch files written.'
+        #messages.info(request, msg)
+        return HttpResponseRedirect('/%s/applicants/' % (area_.slug))
     else:
         return HttpResponseRedirect('/%s/' % (area_.slug))
 
@@ -166,7 +206,52 @@ def TeamApplicants(request, area_slug, team_slug):
     else:
         return HttpResponseRedirect('/%s/%s/' % (team.area.slug, team.slug))
 
-def TeamEmails(request, area_slug, team_slug): # not finished
+def TeamApplicantsReports(request, area_slug, team_slug):
+    created = datetime.datetime.utcnow()
+    created = created.strftime("%Y-%m-%dT%H:%M:%S")
+    team = get_object_or_404(Team, Q(area__slug=area_slug), slug__iexact=team_slug)
+    team_ics = Application.objects.filter(
+        Q(position__team__slug__iexact=team_slug),
+        Q(position__team__area__slug__iexact=area_slug),
+        Q(position__code__in=['IC', 'ICT1', 'ICT2']),
+        Q(status__in=['P','A',])
+        ).exclude(deleted=True).select_related('applicant').values_list('author__email', flat=True).distinct()
+    if request.user.has_perm('icap.manage_area', team.area) or request.user.email in team_ics:
+        exports = settings.STATIC_ROOT + '/exports/'
+        if not os.path.exists(exports):
+            os.makedirs(exports)
+        team_applicants = Application.objects.filter(
+            Q(position__team__slug__iexact=team_slug),
+            Q(position__team__area__slug__iexact=area_slug)
+            ).exclude(deleted=True).select_related('applicant')
+        if team_applicants:
+            team_applicants.update(remarks=remarks.replace("\n", "<br/> ").replace("\r", "<br/> "))
+            context = { 'team_applicants': team_applicants }
+            content = render_to_string('icap/team_applicants.csv', context)
+            nominal = team_slug + '-' + created
+            filename = nominal + str(uuid.uuid4())
+
+            msg = 'Team applicant reports written to <a class="alert-link" href="/s/exports/' + filename + '.csv">/s/exports/' + nominal + '.csv</a> and <a class="alert-link" href="/s/exports/' + filename + '.json">/s/exports/' + nominal + '.json</a>, and emailed to <strong>' + request.user.email + '</strong>.'
+            email = EmailMessage(
+                'icap applicant report', msg, None, [request.user.email])
+            with open(exports + filename + '.csv', 'w') as static_file:
+                static_file.write(content)
+            email.attach_file(exports + filename + '.csv')
+            content = render_to_string('icap/team_applicants.json', context)           
+            with open(exports + filename + '.json', 'w') as static_file:
+                static_file.write(content)
+            email.attach_file(exports + filename + '.json')
+            email.send()
+            messages.info(request, msg)
+            #l = Logitem(author=request.user, status='S', message=msg, obj_model='Fire', obj_id='', obj_in='', obj_out='',)
+            #l.save()
+        #msg = 'Unit and dispatch files written.'
+        #messages.info(request, msg)
+        return HttpResponseRedirect('/%s/%s/applicants/' % (team.area.slug, team.slug))
+    else:
+        return HttpResponseRedirect('/%s/' % (area_.slug))
+
+def TeamEmails(request, area_slug, team_slug):
     team = get_object_or_404(Team, Q(area__slug=area_slug), slug__iexact=team_slug)
     team_ics = Application.objects.filter(
         Q(position__team__slug__iexact=team_slug),
@@ -355,9 +440,36 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
             valid_application.author_id = request.user.id
             valid_application.save()
             form.save_m2m()
+            if position.team.area.e_applied and valid_application.applicant.author.email:
+                top = 'This email is to confirm your application to the positon below.\n\n'
+                a = 'applicant: ' + str(valid_application.applicant.firstname) + ' ' + str(valid_application.applicant.lastname) + ' ' + valid_application.applicant.author.email + '\n'
+                a = a + 'category: ' + str(valid_application.applicant.category) + '\n'
+                a = a + 'area: ' + str(valid_application.applicant.area) + '\n'
+                a = a + 'host agency: ' + str(valid_application.applicant.host_agency) + '\n'
+                a = a + 'city: ' + str(valid_application.applicant.city) + ', ' + str(valid_application.applicant.state) + '\n'
+                a = a + 'dispatch: ' + str(valid_application.applicant.dispatch_office) + '\n'
+                a = a + 'work: ' + str(valid_application.applicant.work) + '\n'
+                a = a + 'home: ' + str(valid_application.applicant.home) + '\n'
+                a = a + 'cell: ' + str(valid_application.applicant.cell) + '\n'
+                a = a + 'iqcs/iqs: ' + str(valid_application.applicant.iqcs) + '\n'
+                a = a + 'qualifications: ' + str(valid_application.applicant.qualifications) + '\n' + str(valid_application.qualifications) + '\n'
+                a = a + 'remarks: ' + str(valid_application.applicant.remarks) + '\n' + valid_application.remarks + '\n'
+                a = a + 'supervisor: ' + str(valid_application.applicant.supervisor_name) + ' ' + str(valid_application.applicant.supervisor_email) + '\n'
+                a = a + 'training: ' + str(valid_application.applicant.training_name) + ' ' + str(valid_application.applicant.training_email) + '\n'
+                a = a + 'admin: ' + str(valid_application.applicant.admin_name) + ' ' + str(valid_application.applicant.admin_email) + '\n'
+                a = a + 'area: ' + str(valid_application.position.team.area.name) + '\n'
+                a = a + 'team: ' + str(valid_application.position.team.name) + '\n'
+                a = a + 'position: ' + str(valid_application.position.name) + '\n'
+                a = a + 'consideration: ' + str(valid_application.consideration) + '\n'
+                bottom = '\n' + str(position.team.area.e_applied)
+                m = top + a + bottom
+                applied_mail = EmailMessage('icap application confirmation', m, None, [valid_application.applicant.author.email])
+                applied_mail.send()
+                valid_application.e_applied = datetime.datetime.now()
+                valid_application.save()
             msg = 'Application to <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s &sect; %s &sect; %s</a> for <a class=\"alert-link\" href=\"/applicant/%s/\">%s</a> updated.' % (position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position.name, valid_application.applicant.author.email, valid_application.applicant.author.email)
             messages.success(request, msg)
-            l = Logitem(author=request.user, status='S', message=msg, obj_model='Applicant', obj_id=valid_application.id, obj_in='', obj_out='',)
+            l = Logitem(author=request.user, status='S', message=msg, obj_model='Application', obj_id=valid_application.id, obj_in='', obj_out='',)
             l.save()
             return HttpResponseRedirect('/applicant/%s/' % (applicant.author.email))
     else:
@@ -415,7 +527,7 @@ def ApplicantUpdate(request):
 
 def Units(request):
     if request.user.is_superuser:
-        path = '/home/ordvac/webapps/icap_ordvac_s/'
+        path = settings.STATIC_ROOT
         os.makedirs(path, exist_ok=True)
         #units = Unit.objects.filter(deleted__isnull=False)
         #chars = ['\'', '-', '&']
