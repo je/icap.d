@@ -84,7 +84,7 @@ class ApplicantAdmin(admin.ModelAdmin):
     list_display = ('firstname', 'lastname', 'author', 'area', 'category', 'host_agency')
     list_per_page = 50
     list_filter = ('area', 'category')
-    list_display_links = ('firstname', 'lastname','author')
+    list_display_links = ('firstname', 'lastname', 'author')
     save_as = True
 
 admin.site.register(Applicant, ApplicantAdmin)
@@ -119,7 +119,7 @@ class ApplicationAdmin(admin.ModelAdmin):
     date_hierarchy = 'created'
     list_display = ('application_applicant_firstname', 'application_applicant_lastname', 'position_team_area', 'position_team', 'position', 'consideration', 'status',)
     list_per_page = 50
-    list_filter = ('position__team__area', 'consideration','status',)
+    list_filter = ('position__team__area', 'consideration', 'status',)
     list_display_links = ('application_applicant_firstname', 'application_applicant_lastname',)
     save_as = True
 
@@ -151,7 +151,7 @@ admin.site.register(Application, ApplicationAdmin)
 
 class ApplicationStatusAdmin(admin.ModelAdmin):
     date_hierarchy = 'created'
-    list_display = ('application_applicant_firstname', 'application_applicant_lastname', 'application_position','application_position_team', 'application_position_team_area', 'status', 'effective', 'author',)
+    list_display = ('application_applicant_firstname', 'application_applicant_lastname', 'application_position', 'application_position_team', 'application_position_team_area', 'status', 'effective', 'author',)
     list_per_page = 50
     list_filter = ('application__position__team__area', 'status', 'author', )
     list_display_links = ('application_applicant_firstname', 'application_applicant_lastname')
@@ -204,7 +204,7 @@ class UnitAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug', 'wildlandrole', 'unitid', 'unittype', 'deleted',)
     ordering = ['name',]
     list_per_page = 50
-    list_filter = ('wildlandrole','nation')
+    list_filter = ('wildlandrole', 'nation')
     save_as = True
 
 admin.site.register(Unit, UnitAdmin)

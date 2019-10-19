@@ -58,11 +58,16 @@
       <th scope="col">Position</th>
       <th scope="col">Consideration</th>
       <th scope="col">Application Status</th>
-      <th scope="col">Applied</th>
-      <th scope="col">Supervisor</th>
-      <th scope="col">Training</th>
-      <th scope="col">Admin</th>
-      <th scope="col">Selected</th>
+      <th scope="col">Applied <span class="float-right small"><input type="checkbox" id="sa_e_applied" name="sa_e_applied"
+            data-checkbox-id="e_applied" class="selectall" /></span></th>
+      <th scope="col">Supervisor <span class="float-right small"><input type="checkbox" id="sa_e_supervisor" name="sa_e_supervisor"
+            data-checkbox-id="e_supervisor" class="selectall" /></span></th>
+      <th scope="col">Training <span class="float-right small"><input type="checkbox" id="sa_e_training" name="sa_e_training"
+            data-checkbox-id="e_training" class="selectall" /></span></th>
+      <th scope="col">Admin <span class="float-right small"><input type="checkbox" id="sa_e_admin" name="sa_e_admin"
+            data-checkbox-id="e_admin" class="selectall" /></span></th>
+      <th scope="col">Selected <span class="float-right small"><input type="checkbox" id="sa_e_selected" name="sa_e_selected"
+            data-checkbox-id="e_selected" class="selectall" /></span></th>
       </tr>
     </thead>
     <tbody>
@@ -76,34 +81,67 @@
         <td>{{ a.get_consideration_display }}</td>
         <td><mark class="alert-link p-0">{{ a.get_status_display }}</mark>{% if a.status_author and a.statused %}<span class="float-right small">{{ a.status_author}} on {{ a.statused|date:'Y-m-d'}}</span>{% endif %}</td>
         <td>
-            <small>{{ a.e_applied|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           {% if a.e_applied %}
+           <div>
+            <small class="text-danger">{{ a.e_applied|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           </div>
+            {% else %}
+           <small class="text-success">{{ a.applicant.author.email|default_if_none:'--' }}</small>
+            {% endif %}
           <span class="float-right small">
             <input type="hidden" name="application_{{ a.id }}" readonly value="{{ a.id }}">
-            <input type="checkbox" name="e_applied_{{ a.id }}" >
+            <input type="checkbox" id="e_applied" name="e_applied_{{ a.id }}" {% if not a.e_applied %}checked{% endif %}>
           </span>
         </td>
         <td>
-           <small>{{ a.e_supervisor|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           {% if a.e_supervisor %}
+           <div>
+            <small class="text-danger">{{ a.r_supervisor|default_if_none:'--' }}</small><br>
+            <small class="text-danger">{{ a.e_supervisor|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           </div>
+            {% else %}
+           <small class="text-success">{{ a.applicant.supervisor_email|default_if_none:'--' }}</small>
+            {% endif %}
           <span class="float-right small">
-            <input type="checkbox" name="e_supervisor_{{ a.id }}" >
+            <input type="checkbox" id="e_supervisor" name="e_supervisor_{{ a.id }}" {% if not a.e_supervisor %}checked{% endif %}>
           </span>
         </td>
         <td>
-            <small>{{ a.e_training|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           {% if a.e_training %}
+           <div>
+            <small class="text-danger">{{ a.r_training|default_if_none:'--' }}</small><br>
+            <small class="text-danger">{{ a.e_training|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           </div>
+            {% else %}
+           <small class="text-success">{{ a.applicant.training_email|default_if_none:'--' }}</small>
+            {% endif %}
           <span class="float-right small">
-            <input type="checkbox" name="e_training_{{ a.id }}" >
+            <input type="checkbox" id="e_training" name="e_training_{{ a.id }}" {% if not a.e_training %}checked{% endif %}>
           </span>
         </td>
         <td>
-            <small>{{ a.e_admin|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           {% if a.e_admin %}
+           <div>
+            <small class="text-danger">{{ a.r_admin|default_if_none:'--' }}</small><br>
+            <small class="text-danger">{{ a.e_admin|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           </div>
+            {% else %}
+           <small class="text-success">{{ a.applicant.admin_email|default_if_none:'--' }}</small>
+            {% endif %}
           <span class="float-right small">
-            <input type="checkbox" name="e_admin_{{ a.id }}" >
+            <input type="checkbox" id="e_admin" name="e_admin_{{ a.id }}" {% if not a.e_admin %}checked{% endif %}>
           </span>
         </td>
         <td>
-            <small>{{ a.e_selected|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           {% if a.e_selected %}
+           <div>
+            <small class="text-danger">{{ a.e_selected|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           </div>
+            {% else %}
+           <small class="text-success">{{ a.applicant.author.email|default_if_none:'--' }}</small>
+            {% endif %}
           <span class="float-right small">
-            <input type="checkbox" name="e_selected_{{ a.id }}" >
+            <input type="checkbox" id="e_selected" name="e_selected_{{ a.id }}" {% if not a.e_selected %}checked{% endif %}>
           </span>
         </td>
       </tr>
@@ -126,4 +164,27 @@
 </div>
 </div>
 </div>
+{% endblock %}
+
+{% block endscripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+    <script>
+    $(document).ready(function(){
+      $(':checkbox.selectall').on('click', function(){
+        $(':checkbox[id="' + $(this).data('checkbox-id') + '"]').prop("checked", $(this).prop("checked"));
+      });
+      $(':checkbox.checkme').on('click', function(){
+        var _selectall = $(this).prop("checked");
+        if ( _selectall ) {
+          $( ':checkbox[id="' + $(this).attr('id') + '"]' ).each(function(i){
+            _selectall = $(this).prop("checked");
+            return _selectall;
+          });
+        }
+        $(':checkbox[id="' + $(this).data('select-all') + '"]').prop("checked", _selectall);
+      });
+    });
+    </script>
 {% endblock %}

@@ -8,13 +8,13 @@
 
 {% block content %}
 {% load tags %}
-{% if user.is_authenticated and perms.icap.add_applicationstatus or request.user.email == auser.email %}
+{% if user.is_authenticated and perms.icap.add_applicationstatus or request.user.email == auser.email or request.user.email in applicant_ics %}
 
 <div class="card mb-2 mt-2 ml-2">
 <h5 class="card-header p-2">
 Applications for '{{ auser.email }}'
 </h5>
-{% if user.is_authenticated and perms.icap.add_applicationstatus or request.user.email == auser.email %}
+{% if user.is_authenticated and perms.icap.add_applicationstatus or request.user.email == auser.email or request.user.email in applicant_ics %}
 <div class="card-body p-2 bg-secondary">
 <table class="table table-bordered table-sm mb-0 bg-white">
   <thead>
@@ -232,7 +232,9 @@ Applications for '{{ auser.email }}'
   </div>
 </div>
 {% else %}
-PERMISSION DENIED
+<div class="alert alert-info mt-2 ml-2 mb-0">
+Permission denied. If there were an applicant at this address, only area coordinators and ICs could see it.
+</div>
 {% endif %}
 
 {% endblock %}

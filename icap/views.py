@@ -15,6 +15,7 @@ from django.core.mail import send_mail, send_mass_mail, mail_managers, EmailMess
 from django.conf import settings
 from django.template.loader import render_to_string
 from guardian.shortcuts import assign, get_users_with_perms, get_objects_for_user, remove_perm
+from allauth.account.utils import *
 from icap.models import *
 from icap.forms import *
 
@@ -225,7 +226,7 @@ def TeamApplicantsReports(request, area_slug, team_slug):
             Q(position__team__area__slug__iexact=area_slug)
             ).exclude(deleted=True).select_related('applicant')
         if team_applicants:
-            team_applicants.update(remarks=remarks.replace("\n", "<br/> ").replace("\r", "<br/> "))
+            #team_applicants.update(remarks=remarks.replace("\n", "<br/> ").replace("\r", "<br/> "))
             context = { 'team_applicants': team_applicants }
             content = render_to_string('icap/team_applicants.csv', context)
             nominal = team_slug + '-' + created
@@ -251,6 +252,28 @@ def TeamApplicantsReports(request, area_slug, team_slug):
     else:
         return HttpResponseRedirect('/%s/' % (area_.slug))
 
+def ApplicationMessage(valid_application):
+    a = 'applicant: ' + str(valid_application.applicant.firstname) + ' ' + str(valid_application.applicant.lastname) + ' ' + valid_application.applicant.author.email + '\n'
+    a = a + 'category: ' + str(valid_application.applicant.category) + '\n'
+    a = a + 'area: ' + str(valid_application.applicant.area) + '\n'
+    a = a + 'host agency: ' + str(valid_application.applicant.host_agency) + '\n'
+    a = a + 'city: ' + str(valid_application.applicant.city) + ', ' + str(valid_application.applicant.state) + '\n'
+    a = a + 'dispatch: ' + str(valid_application.applicant.dispatch_office) + '\n'
+    a = a + 'work: ' + str(valid_application.applicant.work) + '\n'
+    a = a + 'home: ' + str(valid_application.applicant.home) + '\n'
+    a = a + 'cell: ' + str(valid_application.applicant.cell) + '\n'
+    a = a + 'iqcs/iqs: ' + str(valid_application.applicant.iqcs) + '\n'
+    a = a + 'qualifications: ' + str(valid_application.applicant.qualifications) + '\n' + str(valid_application.qualifications) + '\n'
+    a = a + 'remarks: ' + str(valid_application.applicant.remarks) + '\n' + valid_application.remarks + '\n'
+    a = a + 'supervisor: ' + str(valid_application.applicant.supervisor_name) + ' ' + str(valid_application.applicant.supervisor_email) + '\n'
+    a = a + 'training: ' + str(valid_application.applicant.training_name) + ' ' + str(valid_application.applicant.training_email) + '\n'
+    a = a + 'admin: ' + str(valid_application.applicant.admin_name) + ' ' + str(valid_application.applicant.admin_email) + '\n'
+    a = a + 'area: ' + str(valid_application.position.team.area.name) + '\n'
+    a = a + 'team: ' + str(valid_application.position.team.name) + '\n'
+    a = a + 'position: ' + str(valid_application.position.name) + '\n'
+    a = a + 'consideration: ' + str(valid_application.get_consideration_display()) + '\n'
+    return a
+
 def TeamEmails(request, area_slug, team_slug):
     team = get_object_or_404(Team, Q(area__slug=area_slug), slug__iexact=team_slug)
     team_ics = Application.objects.filter(
@@ -274,69 +297,77 @@ def TeamEmails(request, area_slug, team_slug):
                     e_selected_form = 'e_selected_' + str(app.id)
                     mails = ()
                     if e_applied_form in request.POST:
-                        if request.POST[e_applied_form]:
+                        if request.POST[e_applied_form] and team.area.e_applied is not None:
                             e_applied = datetime.datetime.now()
-                            if team.area.e_applied is not None:
-                                m = team.area.e_applied
-                            else:
-                                m = ''
+                            top = 'This email is to confirm your application to the positon below.\n\n'
+                            a = ApplicationMessage(app)
+                            bottom = '\n' + str(app.position.team.area.e_applied)
+                            m = top + a + bottom
                             applied_mail = ('icap application confirmation', m, None, [app.applicant.author.email])
                             mails = mails + (applied_mail,)
                     else:
                         e_applied = app.e_applied
                     if e_supervisor_form in request.POST:
-                        if request.POST[e_supervisor_form]:
+                        if request.POST[e_supervisor_form] and team.area.e_supervisor is not None:
                             e_supervisor = datetime.datetime.now()
                             r_supervisor = app.applicant.supervisor_email
                             a_supervisor = '' # date of approval
-                            if team.area.e_supervisor is not None:
-                                m = team.area.e_supervisor
-                            else:
-                                m = ''
+                            supervisor, _ = User.objects.get_or_create(email__iexact=request.user.email, defaults={'email': request.user.email, 'is_active': False})
+                            if _:
+                                send_email_confirmation(request, user, True)
+
+                            top = 'This email is to request supervisor\'s approval for the application below.\n\n'
+                            a = ApplicationMessage(app)
+                            bottom = '\n' + str(app.position.team.area.e_supervisor)
+                            m = top + a + bottom
                             supervisor_mail = ('icap approval request - supervisor', m, None, [r_supervisor])
                             mails = mails + (supervisor_mail,)
                     else:
                         e_supervisor = app.e_supervisor
                         r_supervisor = app.r_supervisor
+                        a_supervisor = app.a_supervisor
                     if e_training_form in request.POST:
-                        if request.POST[e_training_form]:
+                        if request.POST[e_training_form] and team.area.e_training is not None:
                             e_training = datetime.datetime.now()
                             r_training = app.applicant.training_email
                             a_training = '' # date of approval
-                            if team.area.e_training is not None:
-                                m = team.area.e_training
-                            else:
-                                m = ''
+                            top = 'This email is to request training coordinator\'s approval for the application below.\n\n'
+                            a = ApplicationMessage(app)
+                            bottom = '\n' + str(app.position.team.area.e_training)
+                            m = top + a + bottom
                             training_mail = ('icap approval request - training', m, None, [r_training])
                             mails = mails + (training_mail,)
                     else:
                         e_training = app.e_training
                         r_training = app.r_training
+                        a_training = app.a_training
                     if e_admin_form in request.POST:
-                        if request.POST[e_admin_form]:
+                        if request.POST[e_admin_form] and team.area.e_admin is not None:
                             e_admin = datetime.datetime.now()
                             r_admin = app.applicant.admin_email
                             a_admin = '' # date of approval
-                            if team.area.e_admin is not None:
-                                m = team.area.e_admin
-                            else:
-                                m = ''
-                            admin_mail = ('icap approval request - agency', m, None, [r_admin])
+                            top = 'This email is to request agency admin\'s approval for the application below.\n\n'
+                            a = ApplicationMessage(app)
+                            bottom = '\n' + str(app.position.team.area.e_admin)
+                            m = top + a + bottom
+                            admin_mail = ('icap approval request - admin', m, None, [r_admin])
                             mails = mails + (admin_mail,)
                     else:
                         e_admin = app.e_admin
                         r_admin = app.r_admin
+                        a_admin = app.a_admin
                     if e_selected_form in request.POST:
-                        if request.POST[e_selected_form]:
+                        if request.POST[e_selected_form] and team.area.e_selected is not None:
                             e_selected = datetime.datetime.now()
                             # e_status
                             # e_status_author
                             # statused
-                            if team.area.e_selected is not None:
-                                m = team.area.e_selected
-                            else:
-                                m = ''
-                            selected_mail = ('icap selection notification', m, None, [app.applicant.author.email])
+                            top = 'This email is notify you of the status of the application below.\n\n'
+                            a = ApplicationMessage(app)
+                            a = a + 'selection status: ' + str(app.get_status_display()) + '\n'
+                            bottom = '\n' + str(app.position.team.area.e_selected)
+                            m = top + a + bottom
+                            selected_mail = ('icap selection status notification', m, None, [app.applicant.author.email])
                             mails = mails + (selected_mail,)
                     else:
                         e_selected = app.e_selected
@@ -347,7 +378,7 @@ def TeamEmails(request, area_slug, team_slug):
             messages.success(request, msg)
             l = Logitem(author=request.user, status='S', message=msg, obj_model='Application', obj_id='', obj_in='', obj_out='',)
             l.save()
-            return HttpResponseRedirect('/%s/%s/emails/' % (team.area.slug, team.slug))
+            return HttpResponseRedirect('/%s/%s/applicants/emails/' % (team.area.slug, team.slug))
         return render(request, 'icap/area_team_emails.html', {'team': team, 'team_ics': team_ics, 'team_applicants': team_applicants,})
     else:
         return HttpResponseRedirect('/%s/%s/' % (team.area.slug, team.slug))
@@ -362,7 +393,7 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
         ).exclude(deleted=True).select_related('applicant').values_list('author__email', flat=True).distinct()
     position_applications = Application.objects.filter(
         Q(position__slug__iexact=position_slug),
-        Q(position__team__slug__iexact=team_slug),
+        Q(position__team__slug__iexact=team_slug) | Q(position__team__slug__endswith='applicant-pool'),
         Q(position__team__area__slug__iexact=area_slug)
         ).exclude(deleted=True)
 
@@ -389,8 +420,17 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
                 if app_form in request.POST:
                     app_statused = datetime.datetime.now()
                     app_status = request.POST.get(app_form, '')
-                    set_status = ApplicationStatus.objects.create(author=request.user, application=app, status=app_status, effective=app_statused)
-                    ok = Application.objects.filter(id=app.id).update(status_author=request.user, status=app_status, statused=app_statused)
+                    if app.position != position and app.position.team.slug.endswith('applicant-pool'):
+                        set_status = ApplicationStatus.objects.create(author=request.user, application=app, status='W', effective=app_statused)
+                        ok = Application.objects.filter(id=app.id).update(status_author=request.user, status='W', statused=app_statused)
+                        app.pk = None
+                        app.position = position
+                        app.status = app_status
+                        app.save()
+                        set_status = ApplicationStatus.objects.create(author=request.user, application=app, status=app_status, effective=app_statused)
+                    else:
+                        set_status = ApplicationStatus.objects.create(author=request.user, application=app, status=app_status, effective=app_statused)
+                        ok = Application.objects.filter(id=app.id).update(status_author=request.user, status=app_status, statused=app_statused)
                     msg = 'Application for %s to <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s &sect; %s &sect; %s</a> updated by %s.' % (app.applicant.author.email, position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position.name, request.user.email)
                     messages.success(request, msg)
 
@@ -407,8 +447,17 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
                     if app_form in request.POST:
                         app_statused = datetime.datetime.now()
                         app_status = request.POST.get(app_form, '')
-                        set_status = ApplicationStatus.objects.create(author=request.user, application=app, status=app_status, effective=app_statused)
-                        ok = Application.objects.filter(id=app.id).update(status_author=request.user, status=app_status, statused=app_statused)
+                        if app.position != position and app.position.team.slug.endswith('applicant-pool'):
+                            set_status = ApplicationStatus.objects.create(author=request.user, application=app, status='W', effective=app_statused)
+                            ok = Application.objects.filter(id=app.id).update(status_author=request.user, status='W', statused=app_statused)
+                            app.pk = None
+                            app.position = position
+                            app.status = app_status
+                            app.save()
+                            set_status = ApplicationStatus.objects.create(author=request.user, application=app, status=app_status, effective=app_statused)
+                        else:
+                            set_status = ApplicationStatus.objects.create(author=request.user, application=app, status=app_status, effective=app_statused)
+                            ok = Application.objects.filter(id=app.id).update(status_author=request.user, status=app_status, statused=app_statused)
                         msg = 'Application for %s to <a class=\"alert-link\" href=\"/%s/%s/%s/\">%s &sect; %s &sect; %s</a> updated by %s.' % (app.applicant.author.email, position.team.area.slug, position.team.slug, position.slug, position.team.area, position.team, position.name, request.user.email)
                         messages.success(request, msg)
                         l = Logitem(author=request.user, status='S', message=msg, obj_model='ApplicationStatus', obj_id='', obj_in='', obj_out='',)
@@ -460,7 +509,7 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
                 a = a + 'area: ' + str(valid_application.position.team.area.name) + '\n'
                 a = a + 'team: ' + str(valid_application.position.team.name) + '\n'
                 a = a + 'position: ' + str(valid_application.position.name) + '\n'
-                a = a + 'consideration: ' + str(valid_application.consideration) + '\n'
+                a = a + 'consideration: ' + str(valid_application.get_consideration_display()) + '\n'
                 bottom = '\n' + str(position.team.area.e_applied)
                 m = top + a + bottom
                 applied_mail = EmailMessage('icap application confirmation', m, None, [valid_application.applicant.author.email])
@@ -486,8 +535,14 @@ def ApplicantDetail(request, applicant_user_email):
     applicant_applications = Application.objects.filter(
         Q(applicant__author__email__iexact=applicant_user_email)
         ).exclude(deleted=True)
-
-    return render(request,'icap/applicant.html', {'auser': auser, 'applicant': applicant, 'applicant_applications': applicant_applications,})
+    applicant_teams = applicant_applications.order_by().values_list('position__team', flat=True).distinct()
+    applicant_ics = Application.objects.filter(
+        Q(position__team__in=applicant_teams),
+        #Q(position__team__area__slug__iexact=area_slug),
+        Q(position__code__in=['IC', 'ICT1', 'ICT2']),
+        Q(status__in=['P','A',])
+        ).exclude(deleted=True).select_related('applicant').values_list('author__email', flat=True).distinct()
+    return render(request,'icap/applicant.html', {'auser': auser, 'applicant': applicant, 'applicant_applications': applicant_applications, 'applicant_teams': applicant_teams, 'applicant_ics': applicant_ics})
 
 ApplicantFileFormSet = inlineformset_factory(Applicant, File, form=FileForm, can_delete=True)
 

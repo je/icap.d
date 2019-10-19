@@ -73,12 +73,12 @@ label {
       <td>{{ a.created|date:'Y-m-d' }}{% if a.modified and a.modified|date:'Y-m-d' != a.created|date:'Y-m-d' %} / {{ a.modified|date:'Y-m-d' }}{% endif %}</td>
       <td><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.firstname|default_if_none:'--' }} {{ a.applicant.lastname|default_if_none:'--' }}</a></td>
       <td><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.author.email }}</a></td>
-      <td>{{ a.get_consideration_display }}</td>
+      <td>{{ a.get_consideration_display }}{% if a.position.team != position.team %}<span class="float-right">POOL</span>{% endif %}</td>
     <td class="form-inline">
       <div class="col pl-0 pr-0">
       <div class="input-group input-group-sm">
       <input type="hidden" name="application_{{ a.id }}" readonly value="{{ a.id }}">
-      <select name="application_status_{{ a.id }}" class="form-control form-control-sm" id="id_application_status_{{ a.id }}">
+      <select name="application_status_{{ a.id }}" class="form-control form-control-sm" id="id_application_status_{{ a.id }}" autocomplete="off">
         <option value=""{% if a.status == '' %} selected{% endif %}>--</option>
         <option value="P"{% if a.status == 'P' %} selected{% endif %}>PRIMARY</option>
         <option value="S"{% if a.status == 'S' %} selected{% endif %}>SHARED</option>
@@ -165,7 +165,7 @@ No applicants for this position. We should show a table of applicants to {{ posi
 {% if position_application or user.is_authenticated and "manage_area" not in area_perms %}
   <div class="row ml-0 mr-0">
     <div class='col-sm-4'>
-      <div class='card'>
+      <div class='card mt-2'>
         <div class='card-body'>
           <div class=''>
             <h6><strong>Background</strong></h6>

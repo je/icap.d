@@ -31,8 +31,8 @@ class ApplicantForm(forms.ModelForm):
     lastname = forms.CharField(label='lastname', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'last name'}))
     city = forms.CharField(label='city', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'city'}))
     state = forms.CharField(label='state', max_length=2, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'--'}))
-    area = forms.ModelChoiceField(label='area', required = True, queryset=AreaUS.objects.all(), widget=forms.Select(attrs={'class':'form-control form-control-sm', }),)
-    category = forms.ModelChoiceField(label='category', required = True, queryset=Category.objects.all(), widget=forms.Select(attrs={'class':'form-control form-control-sm', }),)
+    area = forms.ModelChoiceField(label='area', required = True, queryset=AreaUS.objects.all(), widget=forms.Select(attrs={'class':'form-control form-control-sm', 'autocomplete':'off'}),)
+    category = forms.ModelChoiceField(label='category', required = True, queryset=Category.objects.all(), widget=forms.Select(attrs={'class':'form-control form-control-sm', 'autocomplete':'off'}),)
     dispatch_office = forms.CharField(label='dispatch office', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'dispatch office'}))
     host_agency = forms.CharField(label='host agency', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'host agency'}))
     iqcs = forms.CharField(label='iqcs/iqs', required = True, max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'############'}))
@@ -53,14 +53,14 @@ class ApplicantForm(forms.ModelForm):
         exclude = ['created', 'modified', 'applicant', 'author', 'status', 'statused', 'status_author']
 
 class ApplicationForm(forms.ModelForm):
-    consideration = forms.ChoiceField(label='consideration', choices=APPLICATION_STATUS_CHOICES, required = True, widget=forms.Select(attrs={'class':'form-control form-control-sm', }),)
+    consideration = forms.ChoiceField(label='consideration', choices=APPLICATION_STATUS_CHOICES, required = True, widget=forms.Select(attrs={'class':'form-control form-control-sm', 'autocomplete':'off'}),)
     qualifications = forms.CharField(label='qualifications', required = False, widget=forms.Textarea(attrs={'class':'form-control form-control-sm', 'rows': 2, 'placeholder':'qualifications'}))
     remarks = forms.CharField(label='remarks', required = False, widget=forms.Textarea(attrs={'class':'form-control form-control-sm', 'rows': 2, 'placeholder':'additonal remarks'}))
     buy_warrant = forms.NullBooleanField(label='warrant', required=False)
     buy_po = forms.NullBooleanField(label='po', required=False)
-    approved_supervisor = forms.NullBooleanField(label='supervisor approval?', required=False, widget=forms.NullBooleanSelect(attrs={'class':'form-control form-control-sm', }),)
-    approved_admin = forms.NullBooleanField(label='admin approval?', required=False, widget=forms.NullBooleanSelect(attrs={'class':'form-control form-control-sm', }),)
-    approved_training = forms.NullBooleanField(label='training approval?', required=False, widget=forms.NullBooleanSelect(attrs={'class':'form-control form-control-sm', }),)
+    approved_supervisor = forms.NullBooleanField(label='supervisor approval?', required=False, widget=forms.NullBooleanSelect(attrs={'class':'form-control form-control-sm', 'autocomplete':'off'}),)
+    approved_admin = forms.NullBooleanField(label='admin approval?', required=False, widget=forms.NullBooleanSelect(attrs={'class':'form-control form-control-sm', 'autocomplete':'off'}),)
+    approved_training = forms.NullBooleanField(label='training approval?', required=False, widget=forms.NullBooleanSelect(attrs={'class':'form-control form-control-sm', 'autocomplete':'off'}),)
 
     class Meta:
         model = Application

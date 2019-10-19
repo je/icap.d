@@ -306,7 +306,7 @@ class ApplicationStatus(models.Model):
     created = models.DateTimeField('created', auto_now_add=True)
     modified = models.DateTimeField('modified', auto_now=True, blank=True, null=True)
     author = models.ForeignKey(User, on_delete=models.PROTECT)
-    application = models.ForeignKey(Application, on_delete=models.PROTECT, related_name="applicationstatus_application")
+    application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name="applicationstatus_application")
     status = models.CharField('status', max_length=1, choices=APPLICATION_STATUS_CHOICES)
     effective = models.DateTimeField('effective', auto_now_add=False)
 
