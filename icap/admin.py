@@ -121,18 +121,19 @@ class ApplicationAdmin(admin.ModelAdmin):
     list_per_page = 50
     list_filter = ('position__team__area', 'consideration', 'status',)
     list_display_links = ('application_applicant_firstname', 'application_applicant_lastname',)
+    search_fields = ['applicant__lastname']
     save_as = True
 
     def application_applicant_firstname(self, obj):
         return obj.applicant.firstname
 
-    application_applicant_firstname.admin_order_field = 'application__applicant__firstname'
+    application_applicant_firstname.admin_order_field = 'applicant__firstname'
     application_applicant_firstname.short_description = 'firstname'
 
     def application_applicant_lastname(self, obj):
         return obj.applicant.lastname
 
-    application_applicant_lastname.admin_order_field = 'application__applicant__lastname'
+    application_applicant_lastname.admin_order_field = 'applicant__lastname'
     application_applicant_lastname.short_description = 'lastname'
 
     def position_team(self, obj):

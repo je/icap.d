@@ -39,8 +39,8 @@ class ApplicantForm(forms.ModelForm):
     work = forms.CharField(label='work', required = False, max_length=20, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'### ###-####'}))
     home = forms.CharField(label='home', required = False, max_length=20, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'### ###-####'}))
     cell = forms.CharField(label='cell', required = False, max_length=20, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'### ###-####'}))
-    qualifications = forms.CharField(label='qualifications', required = False, widget=forms.Textarea(attrs={'class':'form-control form-control-sm', 'rows': 2, 'placeholder':'qualifications'}))
-    remarks = forms.CharField(label='remarks', required = False, widget=forms.Textarea(attrs={'class':'form-control form-control-sm', 'rows': 2, 'placeholder':'additonal remarks'}))
+    qualifications = forms.CharField(label='qualifications', required = False, widget=forms.Textarea(attrs={'class':'form-control form-control-sm', 'rows': 4, 'placeholder':'qualifications'}))
+    remarks = forms.CharField(label='remarks', required = False, widget=forms.Textarea(attrs={'class':'form-control form-control-sm', 'rows': 4, 'placeholder':'additonal remarks'}))
     supervisor_name = forms.CharField(label='supervisor', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'supervisor name'}))
     supervisor_email = forms.CharField(label='supervisor email', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'pattern': '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,4}$', 'placeholder':'supervisor@example.com'}))
     admin_name = forms.CharField(label='agency admin', max_length=80, widget=forms.TextInput(attrs={'class':'form-control form-control-sm', 'placeholder':'agency admin name'}))
@@ -54,8 +54,8 @@ class ApplicantForm(forms.ModelForm):
 
 class ApplicationForm(forms.ModelForm):
     consideration = forms.ChoiceField(label='consideration', choices=APPLICATION_STATUS_CHOICES, required = True, widget=forms.Select(attrs={'class':'form-control form-control-sm', 'autocomplete':'off'}),)
-    qualifications = forms.CharField(label='qualifications', required = False, widget=forms.Textarea(attrs={'class':'form-control form-control-sm', 'rows': 2, 'placeholder':'qualifications'}))
-    remarks = forms.CharField(label='remarks', required = False, widget=forms.Textarea(attrs={'class':'form-control form-control-sm', 'rows': 2, 'placeholder':'additonal remarks'}))
+    qualifications = forms.CharField(label='qualifications', required = False, widget=forms.Textarea(attrs={'class':'form-control form-control-sm', 'rows': 10, 'placeholder':'qualifications'}))
+    remarks = forms.CharField(label='remarks', required = False, widget=forms.Textarea(attrs={'class':'form-control form-control-sm', 'rows': 10, 'placeholder':'additonal remarks'}))
     buy_warrant = forms.NullBooleanField(label='warrant', required=False)
     buy_po = forms.NullBooleanField(label='po', required=False)
     approved_supervisor = forms.NullBooleanField(label='supervisor approval?', required=False, widget=forms.NullBooleanSelect(attrs={'class':'form-control form-control-sm', 'autocomplete':'off'}),)

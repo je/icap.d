@@ -73,14 +73,14 @@
     <tbody>
   {% for a in team_applicants %}
       <tr>
-        <td>{{ a.created|date:'Y-m-d' }}{% if a.modified and a.modified|date:'Y-m-d' != a.created|date:'Y-m-d' %} / {{ a.modified|date:'Y-m-d' }}{% endif %}</td>
-        <td><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.firstname|default_if_none:'--' }} {{ a.applicant.lastname|default_if_none:'--' }}</a></td>
-        <td><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.author.email }}</a></td>
-        <td>{{ a.applicant.category }}</td>
-        <td><a href="{% url 'position_detail' a.position.team.area.slug a.position.team.slug a.position.slug %}">{{ a.position.name }}</a></td>
-        <td>{{ a.get_consideration_display }}</td>
-        <td><mark class="alert-link p-0">{{ a.get_status_display }}</mark>{% if a.status_author and a.statused %}<span class="float-right small">{{ a.status_author}} on {{ a.statused|date:'Y-m-d'}}</span>{% endif %}</td>
-        <td>
+        <td class='pt-0 pb-0'>{{ a.created|date:'Y-m-d' }}{% if a.modified and a.modified|date:'Y-m-d' != a.created|date:'Y-m-d' %} / {{ a.modified|date:'Y-m-d' }}{% endif %}</td>
+        <td class='pt-0 pb-0'><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.firstname|default_if_none:'--' }} {{ a.applicant.lastname|default_if_none:'--' }}</a></td>
+        <td class='pt-0 pb-0'><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.author.email }}</a></td>
+        <td class='pt-0 pb-0'>{{ a.applicant.category }}</td>
+        <td class='pt-0 pb-0'><a href="{% url 'position_detail' a.position.team.area.slug a.position.team.slug a.position.slug %}">{{ a.position.name }}</a></td>
+        <td class='pt-0 pb-0'>{{ a.get_consideration_display }}</td>
+        <td class='pt-0 pb-0'><mark class="alert-link p-0">{{ a.get_status_display }}</mark>{% if a.status_author and a.statused %}<span class="float-right small">{{ a.status_author}} on {{ a.statused|date:'Y-m-d'}}</span>{% endif %}</td>
+        <td class='pt-0 pb-0'>
            {% if a.e_applied %}
            <div>
             <small class="text-danger">{{ a.e_applied|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
@@ -93,7 +93,7 @@
             <input type="checkbox" id="e_applied" name="e_applied_{{ a.id }}" {% if not a.e_applied %}checked{% endif %}>
           </span>
         </td>
-        <td>
+        <td class='pt-0 pb-0'>
            {% if a.e_supervisor %}
            <div>
             <small class="text-danger">{{ a.r_supervisor|default_if_none:'--' }}</small><br>
@@ -106,7 +106,7 @@
             <input type="checkbox" id="e_supervisor" name="e_supervisor_{{ a.id }}" {% if not a.e_supervisor %}checked{% endif %}>
           </span>
         </td>
-        <td>
+        <td class='pt-0 pb-0'>
            {% if a.e_training %}
            <div>
             <small class="text-danger">{{ a.r_training|default_if_none:'--' }}</small><br>
@@ -119,7 +119,7 @@
             <input type="checkbox" id="e_training" name="e_training_{{ a.id }}" {% if not a.e_training %}checked{% endif %}>
           </span>
         </td>
-        <td>
+        <td class='pt-0 pb-0'>
            {% if a.e_admin %}
            <div>
             <small class="text-danger">{{ a.r_admin|default_if_none:'--' }}</small><br>
@@ -132,7 +132,7 @@
             <input type="checkbox" id="e_admin" name="e_admin_{{ a.id }}" {% if not a.e_admin %}checked{% endif %}>
           </span>
         </td>
-        <td>
+        <td class='pt-0 pb-0'>
            {% if a.e_selected %}
            <div>
             <small class="text-danger">{{ a.e_selected|date:'Y-m-d H:i'|default_if_none:'--' }}</small>

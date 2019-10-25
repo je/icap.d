@@ -14,6 +14,7 @@ from django.core.mail import send_mail, send_mass_mail, mail_managers, EmailMess
 #from django.views.decorators.cache import cache_page
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.urls import reverse
 from guardian.shortcuts import assign, get_users_with_perms, get_objects_for_user, remove_perm
 from allauth.account.utils import *
 from icap.models import *
@@ -76,7 +77,7 @@ def AreaDetail(request, area_slug):
             messages.success(request, msg)
             l = Logitem(author=request.user, status='S', message=msg, obj_model='Area', obj_id=area_.id, obj_in='', obj_out='',)
             l.save()
-            return HttpResponseRedirect('/%s/' % (area_.slug))
+            return HttpResponseRedirect(reverse('area_detail', args=[area_.slug]))
     area_teams = Team.objects.filter(
         Q(area__slug__iexact=area_slug)
         ).exclude(deleted=True)
@@ -90,7 +91,7 @@ def AreaApplicants(request, area_slug):
             ).exclude(deleted=True).select_related('applicant')
         return render(request, 'icap/area_applicants.html', {'area': area_, 'area_applicants': area_applicants,})
     else:
-        return HttpResponseRedirect('/%s/' % (area_.slug))
+        return HttpResponseRedirect(reverse('area_detail', args=[area_.slug]))
 
 def AreaApplicantsReports(request, area_slug):
     created = datetime.datetime.utcnow()
@@ -125,26 +126,10 @@ def AreaApplicantsReports(request, area_slug):
             #l.save()
         #msg = 'Unit and dispatch files written.'
         #messages.info(request, msg)
-        return HttpResponseRedirect('/%s/applicants/' % (area_.slug))
+        return HttpResponseRedirect(reverse('area_applicants', args=[area_.slug]))
     else:
-        return HttpResponseRedirect('/%s/' % (area_.slug))
+        return HttpResponseRedirect(reverse('area_detail', args=[area_.slug]))
 
-def AreaEmails(request, area_slug): # not finished
-    area_ = get_object_or_404(AreaUS, slug__iexact=area_slug)
-    if request.user.has_perm('icap.manage_area', area_):
-        if request.method == "POST":
-            return HttpResponseRedirect('/%s/' % (area_.slug))
-        area_applicants = Application.objects.filter(
-            Q(position__team__area__slug__iexact=area_slug)
-            ).exclude(deleted=True).select_related('applicant')
-        msg = 'Emails for <a class=\"alert-link\" href=\"/%s/">%s</a> updated by %s. Select junk mail to send in the table below.' % (area_.slug, area_.name, request.user.email)
-        messages.info(request, msg)
-        l = Logitem(author=request.user, status='I', message=msg, obj_model='Area', obj_id=area_.id, obj_in='', obj_out='',)
-        l.save()
-
-        return render(request, 'icap/area_emails.html', {'area': area_, 'area_applicants': area_applicants,})
-    else:
-        return HttpResponseRedirect('/%s/' % (area_.slug))
 
 def TeamDetail(request, area_slug, team_slug):
     team = get_object_or_404(Team, Q(area__slug=area_slug), slug__iexact=team_slug)
@@ -163,7 +148,8 @@ def TeamDetail(request, area_slug, team_slug):
             messages.success(request, msg)
             l = Logitem(author=request.user, status='S', message=msg, obj_model='Team', obj_id=team.id, obj_in='', obj_out='',)
             l.save()
-            return HttpResponseRedirect('/%s/%s/' % (team.area.slug, team.slug))
+            return HttpResponseRedirect(reverse('team_detail', args=[team.area.slug, team.slug]))
+
     team_positions = Position.objects.filter(
         Q(team__slug__iexact=team_slug),
         Q(team__area__slug__iexact=area_slug)
@@ -205,7 +191,7 @@ def TeamApplicants(request, area_slug, team_slug):
             ).exclude(deleted=True).select_related('applicant')
         return render(request, 'icap/area_team_applicants.html', {'team': team, 'team_ics': team_ics, 'team_applicants': team_applicants,})
     else:
-        return HttpResponseRedirect('/%s/%s/' % (team.area.slug, team.slug))
+        return HttpResponseRedirect(reverse('team_detail', args=[team.area.slug, team.slug]))
 
 def TeamApplicantsReports(request, area_slug, team_slug):
     created = datetime.datetime.utcnow()
@@ -248,9 +234,9 @@ def TeamApplicantsReports(request, area_slug, team_slug):
             #l.save()
         #msg = 'Unit and dispatch files written.'
         #messages.info(request, msg)
-        return HttpResponseRedirect('/%s/%s/applicants/' % (team.area.slug, team.slug))
+        return HttpResponseRedirect(reverse('team_applicants', args=[team.area.slug, team.slug]))
     else:
-        return HttpResponseRedirect('/%s/' % (area_.slug))
+        return HttpResponseRedirect(reverse('area_detail', args=[area.slug]))
 
 def ApplicationMessage(valid_application):
     a = 'applicant: ' + str(valid_application.applicant.firstname) + ' ' + str(valid_application.applicant.lastname) + ' ' + valid_application.applicant.author.email + '\n'
@@ -312,11 +298,12 @@ def TeamEmails(request, area_slug, team_slug):
                             e_supervisor = datetime.datetime.now()
                             r_supervisor = app.applicant.supervisor_email
                             a_supervisor = '' # date of approval
-                            supervisor, _ = User.objects.get_or_create(email__iexact=request.user.email, defaults={'email': request.user.email, 'is_active': False})
-                            if _:
-                                send_email_confirmation(request, user, True)
-
-                            top = 'This email is to request supervisor\'s approval for the application below.\n\n'
+                            supervisor, _ = User.objects.get_or_create(email__iexact=r_supervisor, defaults={'email': r_supervisor, 'username': app.applicant.supervisor_name, 'is_active': False})
+                            if _ == True:
+                                send_email_confirmation(request, supervisor, True)
+                                top = 'This email is to request supervisor\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and approve or disapprove this application.\n\n'
+                            else:
+                                top = 'This email is to request supervisor\'s approval for the application below.\n\n'
                             a = ApplicationMessage(app)
                             bottom = '\n' + str(app.position.team.area.e_supervisor)
                             m = top + a + bottom
@@ -331,7 +318,12 @@ def TeamEmails(request, area_slug, team_slug):
                             e_training = datetime.datetime.now()
                             r_training = app.applicant.training_email
                             a_training = '' # date of approval
-                            top = 'This email is to request training coordinator\'s approval for the application below.\n\n'
+                            training, _ = User.objects.get_or_create(email__iexact=r_training, defaults={'email': r_training, 'username': app.applicant.training_name, 'is_active': False})
+                            if _ == True:
+                                send_email_confirmation(request, training, True)
+                                top = 'This email is to request training coordinator\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and approve or disapprove this application.\n\n'
+                            else:
+                                top = 'This email is to request training coordinator\'s approval for the application below.\n\n'
                             a = ApplicationMessage(app)
                             bottom = '\n' + str(app.position.team.area.e_training)
                             m = top + a + bottom
@@ -346,7 +338,12 @@ def TeamEmails(request, area_slug, team_slug):
                             e_admin = datetime.datetime.now()
                             r_admin = app.applicant.admin_email
                             a_admin = '' # date of approval
-                            top = 'This email is to request agency admin\'s approval for the application below.\n\n'
+                            admin, _ = User.objects.get_or_create(email__iexact=r_admin, defaults={'email': r_admin, 'username': app.applicant.admin_name, 'is_active': False})
+                            if _ == True:
+                                send_email_confirmation(request, admin, True)
+                                top = 'This email is to request agency admin\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and approve or disapprove this application.\n\n'
+                            else:
+                                top = 'This email is to request agency admin\'s approval for the application below.\n\n'
                             a = ApplicationMessage(app)
                             bottom = '\n' + str(app.position.team.area.e_admin)
                             m = top + a + bottom
@@ -362,7 +359,7 @@ def TeamEmails(request, area_slug, team_slug):
                             # e_status
                             # e_status_author
                             # statused
-                            top = 'This email is notify you of the status of the application below.\n\n'
+                            top = 'This email is notify you of the selection status of the application below.\n\n'
                             a = ApplicationMessage(app)
                             a = a + 'selection status: ' + str(app.get_status_display()) + '\n'
                             bottom = '\n' + str(app.position.team.area.e_selected)
@@ -378,10 +375,10 @@ def TeamEmails(request, area_slug, team_slug):
             messages.success(request, msg)
             l = Logitem(author=request.user, status='S', message=msg, obj_model='Application', obj_id='', obj_in='', obj_out='',)
             l.save()
-            return HttpResponseRedirect('/%s/%s/applicants/emails/' % (team.area.slug, team.slug))
+            return HttpResponseRedirect(reverse('team_emails', args=[team.area.slug, team.slug]))
         return render(request, 'icap/area_team_emails.html', {'team': team, 'team_ics': team_ics, 'team_applicants': team_applicants,})
     else:
-        return HttpResponseRedirect('/%s/%s/' % (team.area.slug, team.slug))
+        return HttpResponseRedirect(reverse('team_detail', args=[team.area.slug, team.slug]))
 
 def PositionDetail(request, area_slug, team_slug, position_slug):
     position = get_object_or_404(Position, Q(team__area__slug=area_slug), Q(team__slug=team_slug), slug__iexact=position_slug)
@@ -438,7 +435,7 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
             messages.success(request, msg)
             l = Logitem(author=request.user, status='S', message=msg, obj_model='ApplicationStatus', obj_id='', obj_in='', obj_out='',)
             l.save()
-            return HttpResponseRedirect('/%s/%s/%s/' % (position.team.area.slug, position.team.slug, position.slug))
+            return HttpResponseRedirect(reverse('position_detail', args=[team.area.slug, team.slug, position.slug]))
         else:
             for app in position_applications:
                 app_button = 'app_' + str(app.id)
@@ -462,7 +459,7 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
                         messages.success(request, msg)
                         l = Logitem(author=request.user, status='S', message=msg, obj_model='ApplicationStatus', obj_id='', obj_in='', obj_out='',)
                         l.save()
-                        return HttpResponseRedirect('/%s/%s/%s/' % (position.team.area.slug, position.team.slug, position.slug))
+                        return HttpResponseRedirect(reverse('position_detail', args=[position.team.area.slug, position.team.slug, position.slug]))
 
         if "positionstatus" in request.POST:
             open_date = request.POST.get('open')
@@ -476,7 +473,7 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
             messages.success(request, msg)
             l = Logitem(author=request.user, status='S', message=msg, obj_model='Position', obj_id=position.id, obj_in='', obj_out='',)
             l.save()
-            return HttpResponseRedirect('/%s/%s/%s/' % (position.team.area.slug, position.team.slug, position.slug))
+            return HttpResponseRedirect(reverse('position_detail', args=[team.area.slug, team.slug, position.slug]))
 
         if position_application:
             form = ApplicationForm(request.POST, instance=position_application)
@@ -520,7 +517,7 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
             messages.success(request, msg)
             l = Logitem(author=request.user, status='S', message=msg, obj_model='Application', obj_id=valid_application.id, obj_in='', obj_out='',)
             l.save()
-            return HttpResponseRedirect('/applicant/%s/' % (applicant.author.email))
+            return HttpResponseRedirect(reverse('applicant_detail', args=[applicant.author.email]))
     else:
         if position_application:
             form = ApplicationForm(instance=position_application)
@@ -567,7 +564,7 @@ def ApplicantUpdate(request):
                     messages.success(request, msg)
                     l = Logitem(author=request.user, status='S', message=msg, obj_model='Applicant', obj_id=valid_applicant.id, obj_in='', obj_out='',)
                     l.save()
-                    #return HttpResponseRedirect('/applicant/')
+                    #return HttpResponseRedirect(reverse('applicant_update'))
         else:
             form = ApplicantForm(instance=applicant)
             fileformset = ApplicantFileFormSet(instance=applicant)
@@ -580,20 +577,61 @@ def ApplicantUpdate(request):
 
     return render(request, 'icap/applicant_update.html', {'applicant': applicant, 'form': form, 'fileformset': fileformset,})
 
+def Approvals(request):
+    if request.user.is_authenticated:
+        applications = Application.objects.filter(Q(r_supervisor__iexact=request.user.email)|Q(r_training__iexact=request.user.email)|Q(r_admin__iexact=request.user.email))
+    else:
+        applications = 0
+    if request.method == "POST":
+        if "approvals" in request.POST:
+            for app in applications:
+                a_supervisor_form = 'a_supervisor_' + str(app.id)
+                a_training_form = 'a_training_' + str(app.id)
+                a_admin_form = 'a_admin_' + str(app.id)
+                if a_supervisor_form in request.POST:
+                    if request.POST[a_supervisor_form] and app.r_supervisor == request.user.email:
+                        a_supervisor = datetime.datetime.now()
+                        approved_supervisor = True # request.POST[a_supervisor_form]
+                elif app.r_supervisor == request.user.email:
+                    a_supervisor = datetime.datetime.now()
+                    approved_supervisor = False # request.POST[a_supervisor_form]
+                else:
+                    a_supervisor = app.a_supervisor
+                    approved_supervisor = app.approved_supervisor
+                if a_training_form in request.POST:
+                    if request.POST[a_training_form] and app.r_training == request.user.email:
+                        a_training = datetime.datetime.now()
+                        approved_training = True # request.POST[a_training_form]
+                elif app.r_training == request.user.email:
+                    a_training = datetime.datetime.now()
+                    approved_training = False # request.POST[a_training_form]
+                else:
+                    a_training = app.a_training
+                    approved_training = app.approved_training
+                if a_admin_form in request.POST:
+                    if request.POST[a_admin_form] and app.r_admin == request.user.email:
+                        a_admin = datetime.datetime.now()
+                        approved_admin = True # request.POST[a_training_form]
+                elif app.r_admin == request.user.email:
+                    a_admin = datetime.datetime.now()
+                    approved_admin = False # request.POST[a_training_form]
+                else:
+                    a_admin = app.a_admin
+                    approved_admin = app.approved_admin
+                ok = Application.objects.filter(id=app.id).update(a_supervisor=a_supervisor, approved_supervisor=approved_supervisor, a_training=a_training, approved_training=approved_training, a_admin=a_admin, approved_admin=approved_admin,)
+
+        msg = 'Application approvals set by %s.' % (request.user.email)
+        messages.success(request, msg)
+        l = Logitem(author=request.user, status='S', message=msg, obj_model='Application', obj_id='', obj_in='', obj_out='',)
+        l.save()
+        return HttpResponseRedirect(reverse('approvals'))
+
+    return render(request, 'icap/approvals.html', {'applications': applications,})
+
 def Units(request):
     if request.user.is_superuser:
         path = settings.STATIC_ROOT
         os.makedirs(path, exist_ok=True)
-        #units = Unit.objects.filter(deleted__isnull=False)
-        #chars = ['\'', '-', '&']
-        #query = Q()
-        #for char in chars:
-        #    query = query | Q(name__icontains=char)
-        #Unit.objects.filter(query).update(
-        #    string_field=Replace('name', Value('\''), Value(''))
-        #)
-        #ok = Unit.objects.filter(query).update(name=self.name.replace('\'','').replace('-',' ').replace('&','and'))
-        
         units = Unit.objects.exclude(deleted__isnull=False)
         if units:
             context = { 'units': units }
@@ -605,8 +643,6 @@ def Units(request):
                 static_file.write(content)
                 msg = 'Unit file written to <a href="/s/unit.csv">/s/unit.csv</a> and <a href="/s/unit.json">/s/unit.json</a>.'
             messages.info(request, msg)
-            #l = Logitem(author=request.user, status='S', message=msg, obj_model='Fire', obj_id='', obj_in='', obj_out='',)
-            #l.save()
         dispatch = Unit.objects.filter(wildlandrole__iexact='Dispatch/Coordination Center').exclude(deleted__isnull=False)#.annotate(clean=unit.replace('\'','').replace('-',' ').replace('&','and'))
         if dispatch:
             context = { 'units': dispatch }
@@ -618,10 +654,8 @@ def Units(request):
                 static_file.write(content)
                 msg = 'Dispatch file written to <a href="/s/dispatch.csv">/s/dispatch.csv</a> and <a href="/s/dispatch.json">/s/dispatch.json</a>.'
             messages.info(request, msg)
-            #l = Logitem(author=request.user, status='S', message=msg, obj_model='Fire', obj_id='', obj_in='', obj_out='',)
-            #l.save()
-        #msg = 'Unit and dispatch files written.'
-        #messages.info(request, msg)
+        msg = 'Unit and dispatch files written.'
+        messages.info(request, msg)
         return HttpResponseRedirect('/')
     else:
         return HttpResponseRedirect('/')

@@ -251,7 +251,7 @@ No applicants for this position. We should show a table of applicants to {{ posi
       <div class="col-sm p-1">
       <div class="card bg-warning m-1">
         <div class="card-body">
-      <div class="card-body">
+
         {{ form.non_field_errors }}
       <div class="row">
         <div class="col-sm">
@@ -260,30 +260,6 @@ No applicants for this position. We should show a table of applicants to {{ posi
           {{ form.consideration.label_tag }}
           {{ form.consideration }}
           <span class="helptext">{{ form.consideration.help_text }}</span>
-        </div>
-        </div>
-        <div class="col-sm">
-        <div class="fieldWrapper">
-          {{ form.approved_supervisor.errors }}
-          {{ form.approved_supervisor.label_tag }}
-          {{ form.approved_supervisor }}
-          <span class="helptext">{{ form.approved_supervisor.help_text }}</span>
-        </div>
-        </div>
-        <div class="col-sm">
-        <div class="fieldWrapper">
-          {{ form.approved_admin.errors }}
-          {{ form.approved_admin.label_tag }}
-          {{ form.approved_admin }}
-          <span class="helptext">{{ form.approved_admin.help_text }}</span>
-        </div>
-        </div>
-        <div class="col-sm">
-        <div class="fieldWrapper">
-          {{ form.approved_training.errors }}
-          {{ form.approved_training.label_tag }}
-          {{ form.approved_training }}
-          <span class="helptext">{{ form.approved_training.help_text }}</span>
         </div>
         </div>
       </div>
@@ -325,7 +301,6 @@ No applicants for this position. We should show a table of applicants to {{ posi
         </div>
       </div>
       {% endif %}
-      </div>
       </div>
       </div>
     </div>
