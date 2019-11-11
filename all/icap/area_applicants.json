@@ -1,4 +1,4 @@
-[{% for a in area_applicants %}
+{% load tags %}[{% for a in area_applicants %}
 {
     "model": "icap.applicant",
     "fields": {
@@ -28,7 +28,8 @@
         "application_remarks": "{{a.remarks|default:'--'|default_if_none:'--'|escapejs}}",
         "application_status": "{{a.get_status_display|default:'--'|default_if_none:'--'}}",
         "status_author": "{{a.status_author|default:'--'|default_if_none:'--'}}",
-        "status_date": "{{a.statused|default:'--'|default_if_none:'--'|date:'Y-m-d H:i:s T'}}"
+        "status_date": "{{a.statused|default:'--'|default_if_none:'--'|date:'Y-m-d H:i:s T'}}",
+        "files": "{% for f in a.applicant.files.all %}<a href='{{ site }}/u/{{ f.afile }}'>{{ f.afile.name|slice:":-41" }}{{ f.afile.name|ext }}</a>, {% endfor %}"
     }
 }{% if forloop.last %}{% else %},{% endif %}{% endfor %}
 ]

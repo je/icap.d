@@ -179,16 +179,41 @@
 <div class="card mt-2 ml-2">
   <div class="card-header p-2">
       <h5 class="mb-0 float-left">
-        Approvals
+        <a href="{% url 'area_detail' team.area.slug %}">{{ team.area }}</a> &sect; {{ team }} Approvals
       </h5>
     <div class="float-right">
+    {% load guardian_tags %}
+    {% get_obj_perms request.user for team.area as "area_perms" %}
+    {% if user.is_authenticated and "manage_area" in area_perms or user.is_authenticated and user.email in team_ics %}
+    <form class="needs-validation" id="teamstatus_form" method="POST" enctype="multipart/form-data" action="{% url 'team_detail' team.area.slug team.slug %}" novalidate>
+    {% csrf_token %}
+    {% if team.open_date and team.close_date %}
+    Open from <input type="date" name="open" value="{{ team.open_date|date:'Y-m-d' }}" class="pb-1 mr-1" maxlength="10" id="id_open" placeholder="YYYY-MM-DD" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"> to 
+    <input type="date" name="close" value="{{ team.close_date|date:'Y-m-d' }}" class="pb-1 mr-1" maxlength="10" id="id_close" placeholder="YYYY-MM-DD" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}">
+    {% else %}
+    Open from <input type="date" name="open" value="" class="pb-1 mr-1" maxlength="10" id="id_open" placeholder="YYYY-MM-DD" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"> to 
+    <input type="date" name="close" value="" class="pb-1 mr-1" maxlength="10" id="id_close" placeholder="YYYY-MM-DD" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}">
+    {% endif %}
+    <input class="btn btn-sm btn-primary float-right pb-1 small" type="submit" name="teamstatus" value="Save dates">
+    </form>
+    {% else %}
+    {% now "Y-m-d" as todays_date %}
+     {% if team.open_date and team.close_date %}
+     {% if team.open_date|date:'Y-m-d' <= todays_date and team.close_date|date:'Y-m-d' >= todays_date %}
+     <span class='text-success font-weight-bold'>
+     {% else %}
+     <span class='text-danger font-weight-bold'>
+     {% endif %}
+     Open from {{ team.open_date|date:'Y-m-d' }} to {{ team.close_date|date:'Y-m-d' }}
+     {% endif %}
+    {% endif %}
     </div>
   </div>
 <div class="card-body p-2">
   <div class="row">
 <div class="col-sm-12">
   <div class="card">
-    <form class="needs-validation" id="approvals_form" method="POST" enctype="multipart/form-data" action="{% url 'approvals' %}" novalidate>
+    <form class="needs-validation" id="emails_form" method="POST" enctype="multipart/form-data" action="{% url 'team_emails' team.area.slug team.slug %}" novalidate>
     {% csrf_token %}
 <h5 class="card-header p-2 pb-3"><strong>Select approvals below, then click 'Set approvals' to record your approval</strong><input class="btn btn-sm btn-primary float-right ml-1 pb-1 small" type="submit" name="approvals" value="Set approvals"></h5>
 <div class="card-body p-2 bg-secondary">
@@ -295,9 +320,15 @@
   </table>
 </div>
     </form>
+    {% if user.is_authenticated and "manage_area" in area_perms or user.is_authenticated and user.email in team_ics %}
   <div class="card-footer p-2 small">
-    Some applicant has specified you as their <strong>supervisor</strong>, <strong>training coordinator</strong>, or <strong>agency administrator</strong>. Select applications to approve using the buttons above, then click 'Set approvals' to record your approval.
+    You are a coordinator for {{ team.area }} and can set open/close dates, <a href="{% url 'team_applicants' team.area.slug team.slug %}">view all applicants</a> to {{ team.name }}, <a href="{% url 'team_applicants_reports' team.area.slug team.slug 'reports' %}">generate csv/json exports of all applicants</a> to {{ team.name }}, and select applicants into team positions.
   </div>
+    {% elif user.is_authenticated and user.email in team_ics %}
+  <div class="card-footer p-2 small">
+    You are an IC on {{ team }} and can set open/close dates, <a href="{% url 'team_applicants' team.area.slug team.slug %}">view all applicants</a> to the team, <a href="{% url 'team_applicants_reports' team.area.slug team.slug 'reports' %}">generate csv/json exports of all applicants</a> to the team, and select applicants into team positions.
+  </div>
+    {% endif %}
 </div>
 </div>
 </div>

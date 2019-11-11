@@ -78,11 +78,11 @@
 </div>
     {% if user.is_authenticated and "manage_area" in area_perms %}
   <div class="card-footer p-2 small">
-    You are a coordinator for {{ team.area }} and can set open/close dates, <a href="{% url 'team_applicants' team.area.slug team.slug %}">view all applicants</a> to {{ team.name }}, <a href="{% url 'team_applicants_reports' team.area.slug team.slug %}">generate csv/json exports of all applicants</a> to {{ team.name }}, and select applicants into team positions.
+    You are a coordinator for {{ team.area }} and can set open/close dates, <a href="{% url 'team_applicants' team.area.slug team.slug %}">view all applicants</a> to {{ team.name }}, <a href="{% url 'team_applicants_reports' team.area.slug team.slug 'reports' %}">generate csv/json exports of all applicants</a> to {{ team.name }}, and select applicants into team positions.
   </div>
     {% elif user.is_authenticated and user.email in team_ics %}
   <div class="card-footer p-2 small">
-    You are an IC on {{ team }} and can set open/close dates, <a href="{% url 'team_applicants' team.area.slug team.slug %}">view all applicants</a> to the team, <a href="{% url 'team_applicants_reports' team.area.slug team.slug %}">generate csv/json exports of all applicants</a> to the team, and select applicants into team positions.
+    You are an IC on {{ team }} and can set open/close dates, <a href="{% url 'team_applicants' team.area.slug team.slug %}">view all applicants</a> to the team, <a href="{% url 'team_applicants_reports' team.area.slug team.slug 'reports' %}">generate csv/json exports of all applicants</a> to the team, and select applicants into team positions.
   </div>
     {% endif %}
 </div>

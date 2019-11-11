@@ -53,9 +53,11 @@
       {% if user.is_authenticated %}
       <div class="nav-item dropdown">
           <a class="dropdown-toggle btn btn-outline-light py-0" href="#" id="user" data-toggle="dropdown"><strong>{{ user.email }}</strong></a>
-        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="user">
-          <a class="dropdown-item" href="{% url 'applicant_update' %}"><strong>Edit applicant info</strong></a>
-          <a class="dropdown-item" href="{% url 'applicant_detail' request.user.email %}"><strong>View application history</strong></a>
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="user"
+>
+          <a class="dropdown-item" href="{% url 'applicant_update' %}"><strong>Edit your applicant info</strong></a>
+          <a class="dropdown-item" href="{% url 'applicant_detail' request.user.email %}"><strong>View your application history</strong></a>
+          <a class="dropdown-item" href="{% url 'approvals' %}"><strong>Set approvals</strong></a>
           <a class="dropdown-item" href="{% url 'account_change_password' %}"><strong>Change password</strong></a>
           <a class="dropdown-item" href="{% url 'feedback' %}"><strong>Send feedback</strong></a>
           <a class="dropdown-item" href="{% url 'account_logout' %}"><strong>Logout</strong></a>
