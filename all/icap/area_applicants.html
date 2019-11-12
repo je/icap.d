@@ -48,6 +48,13 @@
 <h5 class="card-header p-2"><strong>All applicants</strong></h5>
   <div class="card-body p-2 bg-secondary">
   <table class="table table-bordered table-sm mb-0 bg-white">
+    <caption class="bg-white pl-2"><small>{% if area_applicants %}{{ area_applicants|length }}{% else %}0{% endif%} application{{ area_applicants|length|pluralize }} for this area. 
+    {% regroup area_applicants|dictsort:"status" by get_status_display as app_list %}
+    {% for group in app_list %}
+    {{ group.list|length }} {% if group.grouper == '' %}UNSTATUSED{% else %}{{ group.grouper }}{% endif %}{% if forloop.last %}.{% elif forloop.first and forloop.revcounter == 1 %} and {% elif forloop.revcounter == 1 %}, and {% else %}, {% endif %}
+    {% endfor %} 
+    Applications from out-of-area are printed in <span class='text-danger'>red</span>.
+    </small></caption>
     <thead>
       <tr>
       <th scope="col">Date / Edited</th>
@@ -62,13 +69,13 @@
     </thead>
     <tbody>
   {% for a in area_applicants %}
-      <tr>
+      <tr{% if a.applicant.area != a.position.team.area %} class='text-danger'{% endif %}>
         <td>{{ a.created|date:'Y-m-d' }}{% if a.modified and a.modified|date:'Y-m-d' != a.created|date:'Y-m-d' %} / {{ a.modified|date:'Y-m-d' }}{% endif %}</td>
-        <td><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.firstname|default_if_none:'--' }} {{ a.applicant.lastname|default_if_none:'--' }}</a></td>
-        <td><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.author.email }}</a></td>
+        <td><a{% if a.applicant.area != a.position.team.area %} class='text-danger'{% endif %} href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.firstname|default_if_none:'--' }} {{ a.applicant.lastname|default_if_none:'--' }}</a></td>
+        <td><a{% if a.applicant.area != a.position.team.area %} class='text-danger'{% endif %} href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.author.email }}</a></td>
         <td>{{ a.applicant.category }}</td>
-        <td><a href="{% url 'team_detail' a.position.team.area.slug a.position.team.slug %}">{{ a.position.team }}</a></td>
-        <td><a href="{% url 'position_detail' a.position.team.area.slug a.position.team.slug a.position.slug %}">{{ a.position.name }}</a></td>
+        <td><a{% if a.applicant.area != a.position.team.area %} class='text-danger'{% endif %} href="{% url 'team_detail' a.position.team.area.slug a.position.team.slug %}">{{ a.position.team }}</a></td>
+        <td><a{% if a.applicant.area != a.position.team.area %} class='text-danger'{% endif %} href="{% url 'position_detail' a.position.team.area.slug a.position.team.slug a.position.slug %}">{{ a.position.name }}</a></td>
         <td>{{ a.get_consideration_display }}</td>
         <td><mark class="alert-link p-0">{{ a.get_status_display }}</mark>{% if a.status_author and a.statused %}<span class="float-right small">{{ a.status_author}} on {{ a.statused|date:'Y-m-d'}}</span>{% endif %}</td>
       </tr>

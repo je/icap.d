@@ -48,11 +48,12 @@ label {
 {% if position_applications %}
 <div class="card-body p-2 bg-secondary">
 <table class="table table-bordered table-sm mb-0 bg-white">
-<caption class="bg-white pl-2"><small>{% if position_applications %}{{ position_applications|length }}{% else %}0{% endif%} application{{ position_applications|length|pluralize }} for this position.
+<caption class="bg-white pl-2"><small>{% if position_applications %}{{ position_applications|length }}{% else %}0{% endif%} application{{ position_applications|length|pluralize }} for this position. 
 {% regroup position_applications|dictsort:"status" by get_status_display as app_list %}
 {% for group in app_list %}
 {{ group.list|length }} {% if group.grouper == '' %}UNSTATUSED{% else %}{{ group.grouper }}{% endif %}{% if forloop.last %}.{% elif forloop.first and forloop.revcounter == 1 %} and {% elif forloop.revcounter == 1 %}, and {% else %}, {% endif %}
-{% endfor %}
+{% endfor %} 
+Applications from out-of-area are printed in <span class='text-danger'>red</span>.
 </small></caption>
 <form class="needs-validation" id="applications_form" method="POST" enctype="multipart/form-data" action="{% url 'position_detail' position.team.area.slug position.team.slug position.slug %}" novalidate>
   {% csrf_token %}
@@ -69,10 +70,10 @@ label {
   </thead>
   <tbody>
 {% for a in position_applications %}
-    <tr>
+    <tr{% if a.applicant.area != a.position.team.area %} class='text-danger'{% endif %}>
       <td>{{ a.created|date:'Y-m-d' }}{% if a.modified and a.modified|date:'Y-m-d' != a.created|date:'Y-m-d' %} / {{ a.modified|date:'Y-m-d' }}{% endif %}</td>
-      <td><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.firstname|default_if_none:'--' }} {{ a.applicant.lastname|default_if_none:'--' }}</a></td>
-      <td><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.author.email }}</a></td>
+      <td><a{% if a.applicant.area != a.position.team.area %} class='text-danger'{% endif %} href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.firstname|default_if_none:'--' }} {{ a.applicant.lastname|default_if_none:'--' }}</a></td>
+      <td><a{% if a.applicant.area != a.position.team.area %} class='text-danger'{% endif %} href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.author.email }}</a></td>
       <td>{{ a.get_consideration_display }}{% if a.position.team != position.team %}<span class="float-right">POOL</span>{% endif %}</td>
     <td class="form-inline">
       <div class="col pl-0 pr-0">

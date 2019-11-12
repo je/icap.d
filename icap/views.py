@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Case, When, Q, F, Count, Value
 #from django.db.models.functions import Replace
+from django.db.models.functions import Lower
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.forms.models import inlineformset_factory
@@ -160,7 +161,7 @@ def TeamDetail(request, area_slug, team_slug):
         Q(position__team__area__slug__iexact=area_slug),
         Q(position__code__in=['IC', 'ICT1', 'ICT2']),
         Q(status__in=['P','A',])
-        ).exclude(deleted=True).select_related('applicant').values_list('author__email', flat=True).distinct()
+        ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
     if request.method == "POST":
         if "teamstatus" in request.POST:
             open_date = request.POST.get('open')
@@ -205,8 +206,8 @@ def TeamApplicants(request, area_slug, team_slug):
         Q(position__team__area__slug__iexact=area_slug),
         Q(position__code__in=['IC', 'ICT1', 'ICT2']),
         Q(status__in=['P','A',])
-        ).exclude(deleted=True).select_related('applicant').values_list('author__email', flat=True).distinct()
-    if request.user.has_perm('icap.manage_area', team.area) or request.user.email in team_ics:
+        ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
+    if request.user.has_perm('icap.manage_area', team.area) or request.user.email.lower() in team_ics:
         team_applicants = Application.objects.filter(
             Q(position__team__slug__iexact=team_slug),
             Q(position__team__area__slug__iexact=area_slug)
@@ -224,8 +225,8 @@ def TeamApplicantsReports(request, area_slug, team_slug, switch):
         Q(position__team__area__slug__iexact=area_slug),
         Q(position__code__in=['IC', 'ICT1', 'ICT2']),
         Q(status__in=['P','A',])
-        ).exclude(deleted=True).select_related('applicant').values_list('author__email', flat=True).distinct()
-    if request.user.has_perm('icap.manage_area', team.area) or request.user.email in team_ics:
+        ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
+    if request.user.has_perm('icap.manage_area', team.area) or request.user.email.lower() in team_ics:
         exports = settings.STATIC_ROOT + '/exports/'
         if not os.path.exists(exports):
             os.makedirs(exports)
@@ -311,12 +312,12 @@ def TeamEmails(request, area_slug, team_slug):
         Q(position__team__area__slug__iexact=area_slug),
         Q(position__code__in=['IC', 'ICT1', 'ICT2']),
         Q(status__in=['P','A',])
-        ).exclude(deleted=True).select_related('applicant').values_list('author__email', flat=True).distinct()
+        ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
     team_applicants = Application.objects.filter(
         Q(position__team__slug__iexact=team_slug),
         Q(position__team__area__slug__iexact=area_slug)
         ).exclude(deleted=True).select_related('applicant')
-    if request.user.has_perm('icap.manage_area', team.area) or request.user.email in team_ics:
+    if request.user.has_perm('icap.manage_area', team.area) or request.user.email.lower() in team_ics:
         if request.method == "POST":
             if "emails" in request.POST:
                 for app in team_applicants:
@@ -483,14 +484,16 @@ def TeamApprovals(request, area_slug, team_slug):
         Q(position__team__area__slug__iexact=area_slug),
         Q(position__code__in=['IC', 'ICT1', 'ICT2']),
         Q(status__in=['P','A',])
-        ).exclude(deleted=True).select_related('applicant').values_list('author__email', flat=True).distinct()
-    if request.user.has_perm('icap.manage_area', team.area) or request.user.email in team_ics:
+        ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
+    if request.user.has_perm('icap.manage_area', team.area) or request.user.email.lower() in team_ics:
         applications = Application.objects.filter(
             Q(position__team__slug__iexact=team_slug),
             Q(position__team__area__slug__iexact=area_slug)
             ).exclude(deleted=True).select_related('applicant')
     else:
-        applications = 0
+        msg = 'Login to set approvals.'
+        messages.success(request, msg)
+        return HttpResponseRedirect(reverse('index'))
     if request.method == "POST":
         if "approvals" in request.POST:
             for app in applications:
@@ -498,30 +501,30 @@ def TeamApprovals(request, area_slug, team_slug):
                 a_training_form = 'a_training_' + str(app.id)
                 a_admin_form = 'a_admin_' + str(app.id)
                 if a_supervisor_form in request.POST:
-                    if request.POST[a_supervisor_form] and app.r_supervisor == request.user.email:
+                    if request.POST[a_supervisor_form] and app.r_supervisor.lower() == request.user.email.lower():
                         a_supervisor = datetime.datetime.now()
                         approved_supervisor = True # request.POST[a_supervisor_form]
-                elif app.r_supervisor == request.user.email:
+                elif app.r_supervisor.lower() == request.user.email.lower():
                     a_supervisor = datetime.datetime.now()
                     approved_supervisor = False # request.POST[a_supervisor_form]
                 else:
                     a_supervisor = app.a_supervisor
                     approved_supervisor = app.approved_supervisor
                 if a_training_form in request.POST:
-                    if request.POST[a_training_form] and app.r_training == request.user.email:
+                    if request.POST[a_training_form] and app.r_training.lower() == request.user.email.lower():
                         a_training = datetime.datetime.now()
                         approved_training = True # request.POST[a_training_form]
-                elif app.r_training == request.user.email:
+                elif app.r_training.lower() == request.user.email.lower():
                     a_training = datetime.datetime.now()
                     approved_training = False # request.POST[a_training_form]
                 else:
                     a_training = app.a_training
                     approved_training = app.approved_training
                 if a_admin_form in request.POST:
-                    if request.POST[a_admin_form] and app.r_admin == request.user.email:
+                    if request.POST[a_admin_form] and app.r_admin.lower() == request.user.email.lower():
                         a_admin = datetime.datetime.now()
                         approved_admin = True # request.POST[a_training_form]
-                elif app.r_admin == request.user.email:
+                elif app.r_admin.lower() == request.user.email.lower():
                     a_admin = datetime.datetime.now()
                     approved_admin = False # request.POST[a_training_form]
                 else:
@@ -545,7 +548,7 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
         Q(position__team__area__slug__iexact=area_slug),
         Q(position__code__in=['IC', 'ICT1', 'ICT2']),
         Q(status__in=['P','A',])
-        ).exclude(deleted=True).select_related('applicant').values_list('author__email', flat=True).distinct()
+        ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
     position_applications = Application.objects.filter(
         Q(position__slug__iexact=position_slug),
         Q(position__team__slug__iexact=team_slug) | Q(position__team__slug__endswith='applicant-pool'),
@@ -696,7 +699,7 @@ def ApplicantDetail(request, applicant_user_email):
         #Q(position__team__area__slug__iexact=area_slug),
         Q(position__code__in=['IC', 'ICT1', 'ICT2']),
         Q(status__in=['P','A',])
-        ).exclude(deleted=True).select_related('applicant').values_list('author__email', flat=True).distinct()
+        ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
     return render(request,'icap/applicant.html', {'auser': auser, 'applicant': applicant, 'applicant_applications': applicant_applications, 'applicant_teams': applicant_teams, 'applicant_ics': applicant_ics})
 
 ApplicantFileFormSet = inlineformset_factory(Applicant, File, form=FileForm, can_delete=True)
@@ -739,7 +742,9 @@ def Approvals(request):
     if request.user.is_authenticated:
         applications = Application.objects.filter(Q(r_supervisor__iexact=request.user.email)|Q(r_training__iexact=request.user.email)|Q(r_admin__iexact=request.user.email))
     else:
-        applications = 0
+        msg = 'Login to set approvals.'
+        messages.success(request, msg)
+        return HttpResponseRedirect(reverse('index'))
     if request.method == "POST":
         if "approvals" in request.POST:
             for app in applications:
@@ -747,30 +752,30 @@ def Approvals(request):
                 a_training_form = 'a_training_' + str(app.id)
                 a_admin_form = 'a_admin_' + str(app.id)
                 if a_supervisor_form in request.POST:
-                    if request.POST[a_supervisor_form] and app.r_supervisor == request.user.email:
+                    if request.POST[a_supervisor_form] and app.r_supervisor.lower() == request.user.email.lower():
                         a_supervisor = datetime.datetime.now()
                         approved_supervisor = True # request.POST[a_supervisor_form]
-                elif app.r_supervisor == request.user.email:
+                elif app.r_supervisor.lower() == request.user.email.lower():
                     a_supervisor = datetime.datetime.now()
                     approved_supervisor = False # request.POST[a_supervisor_form]
                 else:
                     a_supervisor = app.a_supervisor
                     approved_supervisor = app.approved_supervisor
                 if a_training_form in request.POST:
-                    if request.POST[a_training_form] and app.r_training == request.user.email:
+                    if request.POST[a_training_form] and app.r_training.lower() == request.user.email.lower():
                         a_training = datetime.datetime.now()
                         approved_training = True # request.POST[a_training_form]
-                elif app.r_training == request.user.email:
+                elif app.r_training.lower() == request.user.email.lower():
                     a_training = datetime.datetime.now()
                     approved_training = False # request.POST[a_training_form]
                 else:
                     a_training = app.a_training
                     approved_training = app.approved_training
                 if a_admin_form in request.POST:
-                    if request.POST[a_admin_form] and app.r_admin == request.user.email:
+                    if request.POST[a_admin_form] and app.r_admin.lower() == request.user.email.lower():
                         a_admin = datetime.datetime.now()
                         approved_admin = True # request.POST[a_training_form]
-                elif app.r_admin == request.user.email:
+                elif app.r_admin.lower() == request.user.email.lower():
                     a_admin = datetime.datetime.now()
                     approved_admin = False # request.POST[a_training_form]
                 else:
