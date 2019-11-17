@@ -3,6 +3,10 @@
 {% load i18n %}
 {% load account %}
 
+{% block title %}
+<title>{{ request.site.name }}{% url 'feedback' %}</title>
+{% endblock %}
+
 {% block collapse %}
 {% endblock %}
 

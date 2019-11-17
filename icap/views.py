@@ -88,71 +88,81 @@ def AreaDetail(request, area_slug):
     return render(request, 'icap/area.html', {'area': area_, 'area_teams': area_teams,})
 
 def AreaApplicants(request, area_slug):
-    area_ = get_object_or_404(AreaUS, slug__iexact=area_slug)
-    if request.user.has_perm('icap.manage_area', area_):
-        area_applicants = Application.objects.filter(
-            Q(position__team__area__slug__iexact=area_slug)
-            ).exclude(deleted=True).select_related('applicant')
-        no_applications = Applicant.objects.filter(area__slug__iexact=area_slug, application_applicant=None) 
-        return render(request, 'icap/area_applicants.html', {'area': area_, 'area_applicants': area_applicants, 'no_applications': no_applications,})
+    if request.user.is_authenticated:
+        area_ = get_object_or_404(AreaUS, slug__iexact=area_slug)
+        if request.user.has_perm('icap.manage_area', area_):
+            area_applicants = Application.objects.filter(
+                Q(position__team__area__slug__iexact=area_slug)
+                ).exclude(deleted=True).select_related('applicant')
+            no_applications = Applicant.objects.filter(area__slug__iexact=area_slug, application_applicant=None) 
+            return render(request, 'icap/area_applicants.html', {'area': area_, 'area_applicants': area_applicants, 'no_applications': no_applications,})
+        else:
+            return HttpResponseRedirect(reverse('area_detail', args=[area_.slug]))
     else:
+        msg = 'Log in to view area applicants.'
+        messages.info(request, msg)
         return HttpResponseRedirect(reverse('area_detail', args=[area_.slug]))
 
 def AreaApplicantsReports(request, area_slug, switch):
-    created = datetime.datetime.utcnow()
-    created = created.strftime("%Y-%m-%dT%H:%M:%S")
-    area_ = get_object_or_404(AreaUS, slug__iexact=area_slug)
-    if request.user.has_perm('icap.manage_area', area_):
-        exports = settings.STATIC_ROOT + 'exports/'
-        if not os.path.exists(exports):
-            os.makedirs(exports)
-        area_applicants = Application.objects.filter(
-            Q(position__team__area__slug__iexact=area_slug)
-            ).exclude(deleted=True).select_related('applicant')
-        if area_applicants:
-            nominal = area_slug + '-' + created
-            filename = nominal + str(uuid.uuid4())
-            if switch == 'file-attachments':
-                applicants = Application.objects.filter(
-                    Q(position__team__area__slug__iexact=area_slug)
-                    ).exclude(deleted=True).select_related('applicant').values('applicant_id')
-                area_files = File.objects.filter(applicant__in=applicants).exclude(deleted=True)
+    if request.user.is_authenticated:
+        created = datetime.datetime.utcnow()
+        created = created.strftime("%Y-%m-%dT%H:%M:%S")
+        area_ = get_object_or_404(AreaUS, slug__iexact=area_slug)
+        if request.user.has_perm('icap.manage_area', area_):
+            exports = settings.STATIC_ROOT + 'exports/'
+            if not os.path.exists(exports):
+                os.makedirs(exports)
+            area_applicants = Application.objects.filter(
+                Q(position__team__area__slug__iexact=area_slug)
+                ).exclude(deleted=True).select_related('applicant')
+            if area_applicants:
+                nominal = area_slug + '-' + created
+                filename = nominal + str(uuid.uuid4())
+                if switch == 'file-attachments':
+                    applicants = Application.objects.filter(
+                        Q(position__team__area__slug__iexact=area_slug)
+                        ).exclude(deleted=True).select_related('applicant').values('applicant_id')
+                    area_files = File.objects.filter(applicant__in=applicants).exclude(deleted=True)
 
-                zip_filename = exports + filename + '.zip'
-                zf = zipfile.ZipFile(zip_filename, "w")
-                for f in area_files:
-                    fn = settings.UFS + '/' + str(f.afile.name)
-                    fdir, fname = os.path.split(fn)
-                    zip_path = fn
-                    zf.write(fn, fname)
-                zf.close()
-                fmsg = ' ' + str(len(area_files)) + ' files for ' + str(len(applicants)) + ' applicants zipped to <a class="alert-link" href="/s/exports/' + filename + '.zip">' + nominal + '.zip</a>.'
-                ftxt = ' ' + str(len(area_files)) + ' files for ' + str(len(applicants)) + ' applicants zipped to https://' + settings.SITE_URL + '/s/exports/' + filename + '.zip.'
-            else:
-                fmsg = ''
-                ftxt = ''
+                    zip_filename = exports + filename + '.zip'
+                    zf = zipfile.ZipFile(zip_filename, "w")
+                    for f in area_files:
+                        fn = settings.UFS + '/' + str(f.afile.name)
+                        fdir, fname = os.path.split(fn)
+                        zip_path = fn
+                        zf.write(fn, fname)
+                    zf.close()
+                    fmsg = ' ' + str(len(area_files)) + ' files for ' + str(len(applicants)) + ' applicants zipped to <a class="alert-link" href="/s/exports/' + filename + '.zip">' + nominal + '.zip</a>.'
+                    ftxt = ' ' + str(len(area_files)) + ' files for ' + str(len(applicants)) + ' applicants zipped to https://' + settings.SITE_URL + '/s/exports/' + filename + '.zip.'
+                else:
+                    fmsg = ''
+                    ftxt = ''
 
-            msg = 'Area applicant reports emailed to <strong>' + request.user.email + '</strong> and written to <a class="alert-link" href="/s/exports/' + filename + '.csv">' + nominal + '.csv</a> and <a class="alert-link" href="/s/exports/' + filename + '.json">' + nominal + '.json</a>.' + fmsg
-            txt = 'Area applicant reports emailed to ' + request.user.email + ' and written to https://' + settings.SITE_URL + '/s/exports/' + filename + '.csv and https://' + settings.SITE_URL + '/s/exports/' + filename + '.json.' + ftxt
+                msg = 'Area applicant reports emailed to <strong>' + request.user.email + '</strong> and written to <a class="alert-link" href="/s/exports/' + filename + '.csv">' + nominal + '.csv</a> and <a class="alert-link" href="/s/exports/' + filename + '.json">' + nominal + '.json</a>.' + fmsg
+                txt = 'Area applicant reports emailed to ' + request.user.email + ' and written to https://' + settings.SITE_URL + '/s/exports/' + filename + '.csv and https://' + settings.SITE_URL + '/s/exports/' + filename + '.json.' + ftxt
 
-            email = EmailMessage(
-                'icap applicant report', txt, None, [request.user.email])
-            context = { 'area_applicants': area_applicants, 'site': settings.SITE_URL }
-            content = render_to_string('icap/area_applicants.csv', context)
-            with open(exports + filename + '.csv', 'w') as static_file:
-                static_file.write(content)
-            email.attach_file(exports + filename + '.csv')
-            content = render_to_string('icap/area_applicants.json', context)           
-            with open(exports + filename + '.json', 'w') as static_file:
-                static_file.write(content)
-            email.attach_file(exports + filename + '.json')
-            email.send()
-            messages.info(request, msg)
-            #l = Logitem(author=request.user, status='S', message=msg, obj_model='Fire', obj_id='', obj_in='', obj_out='',)
-            #l.save()
-        return HttpResponseRedirect(reverse('area_applicants', args=[area_.slug]))
+                email = EmailMessage(
+                    'icap applicant report', txt, None, [request.user.email])
+                context = { 'area_applicants': area_applicants, 'site': settings.SITE_URL }
+                content = render_to_string('icap/area_applicants.csv', context)
+                with open(exports + filename + '.csv', 'w') as static_file:
+                    static_file.write(content)
+                email.attach_file(exports + filename + '.csv')
+                content = render_to_string('icap/area_applicants.json', context)           
+                with open(exports + filename + '.json', 'w') as static_file:
+                    static_file.write(content)
+                email.attach_file(exports + filename + '.json')
+                email.send()
+                messages.info(request, msg)
+                #l = Logitem(author=request.user, status='S', message=msg, obj_model='Fire', obj_id='', obj_in='', obj_out='',)
+                #l.save()
+            return HttpResponseRedirect(reverse('area_applicants', args=[area_.slug]))
+        else:
+            return HttpResponseRedirect(reverse('area_detail', args=[area_.slug]))
     else:
-        return HttpResponseRedirect(reverse('area_detail', args=[area_.slug]))
+        msg = 'Log in to view area applicants.'
+        messages.info(request, msg)
+        return HttpResponseRedirect(reverse('area_detail', args=[area_slug]))
 
 def TeamDetail(request, area_slug, team_slug):
     team = get_object_or_404(Team, Q(area__slug=area_slug), slug__iexact=team_slug)
@@ -200,88 +210,98 @@ def TeamDetail(request, area_slug, team_slug):
     return render(request, 'icap/area_team.html', {'team': team, 'team_ics': team_ics, 'team_positions': team_positions})
 
 def TeamApplicants(request, area_slug, team_slug):
-    team = get_object_or_404(Team, Q(area__slug=area_slug), slug__iexact=team_slug)
-    team_ics = Application.objects.filter(
-        Q(position__team__slug__iexact=team_slug),
-        Q(position__team__area__slug__iexact=area_slug),
-        Q(position__code__in=['IC', 'ICT1', 'ICT2']),
-        Q(status__in=['P','A',])
-        ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
-    if request.user.has_perm('icap.manage_area', team.area) or request.user.email.lower() in team_ics:
-        team_applicants = Application.objects.filter(
+    if request.user.is_authenticated:
+        team = get_object_or_404(Team, Q(area__slug=area_slug), slug__iexact=team_slug)
+        team_ics = Application.objects.filter(
             Q(position__team__slug__iexact=team_slug),
-            Q(position__team__area__slug__iexact=area_slug)
-            ).exclude(deleted=True).select_related('applicant')
-        return render(request, 'icap/area_team_applicants.html', {'team': team, 'team_ics': team_ics, 'team_applicants': team_applicants,})
+            Q(position__team__area__slug__iexact=area_slug),
+            Q(position__code__in=['IC', 'ICT1', 'ICT2']),
+            Q(status__in=['P','A',])
+            ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
+        if request.user.has_perm('icap.manage_area', team.area) or request.user.email.lower() in team_ics:
+            team_applicants = Application.objects.filter(
+                Q(position__team__slug__iexact=team_slug),
+                Q(position__team__area__slug__iexact=area_slug)
+                ).exclude(deleted=True).select_related('applicant')
+            return render(request, 'icap/area_team_applicants.html', {'team': team, 'team_ics': team_ics, 'team_applicants': team_applicants,})
+        else:
+            return HttpResponseRedirect(reverse('team_detail', args=[team.area.slug, team.slug]))
     else:
-        return HttpResponseRedirect(reverse('team_detail', args=[team.area.slug, team.slug]))
+        msg = 'Log in to view team applicants.'
+        messages.info(request, msg)
+        return HttpResponseRedirect(reverse('team_detail', args=[area_slug, team_slug]))
 
 def TeamApplicantsReports(request, area_slug, team_slug, switch):
-    created = datetime.datetime.utcnow()
-    created = created.strftime("%Y-%m-%dT%H:%M:%S")
-    team = get_object_or_404(Team, Q(area__slug=area_slug), slug__iexact=team_slug)
-    team_ics = Application.objects.filter(
-        Q(position__team__slug__iexact=team_slug),
-        Q(position__team__area__slug__iexact=area_slug),
-        Q(position__code__in=['IC', 'ICT1', 'ICT2']),
-        Q(status__in=['P','A',])
-        ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
-    if request.user.has_perm('icap.manage_area', team.area) or request.user.email.lower() in team_ics:
-        exports = settings.STATIC_ROOT + '/exports/'
-        if not os.path.exists(exports):
-            os.makedirs(exports)
-        team_applicants = Application.objects.filter(
+    if request.user.is_authenticated:
+        created = datetime.datetime.utcnow()
+        created = created.strftime("%Y-%m-%dT%H:%M:%S")
+        team = get_object_or_404(Team, Q(area__slug=area_slug), slug__iexact=team_slug)
+        team_ics = Application.objects.filter(
             Q(position__team__slug__iexact=team_slug),
-            Q(position__team__area__slug__iexact=area_slug)
-            ).exclude(deleted=True).select_related('applicant')
-        if team_applicants:
-            #team_applicants.update(remarks=remarks.replace("\n", "<br/> ").replace("\r", "<br/> "))
-            nominal = team_slug + '-' + created
-            filename = nominal + str(uuid.uuid4())
-            if switch == 'file-attachments':
-                applicants = Application.objects.filter(
-                    Q(position__team__slug__iexact=team_slug),
-                    Q(position__team__area__slug__iexact=area_slug)
-                    ).exclude(deleted=True).select_related('applicant').values('applicant_id')
-                team_files = File.objects.filter(applicant__in=applicants).exclude(deleted=True)
+            Q(position__team__area__slug__iexact=area_slug),
+            Q(position__code__in=['IC', 'ICT1', 'ICT2']),
+            Q(status__in=['P','A',])
+            ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
+        if request.user.has_perm('icap.manage_area', team.area) or request.user.email.lower() in team_ics:
+            exports = settings.STATIC_ROOT + '/exports/'
+            if not os.path.exists(exports):
+                os.makedirs(exports)
+            team_applicants = Application.objects.filter(
+                Q(position__team__slug__iexact=team_slug),
+                Q(position__team__area__slug__iexact=area_slug)
+                ).exclude(deleted=True).select_related('applicant')
+            if team_applicants:
+                #team_applicants.update(remarks=remarks.replace("\n", "<br/> ").replace("\r", "<br/> "))
+                nominal = team_slug + '-' + created
+                filename = nominal + str(uuid.uuid4())
+                if switch == 'file-attachments':
+                    applicants = Application.objects.filter(
+                        Q(position__team__slug__iexact=team_slug),
+                        Q(position__team__area__slug__iexact=area_slug)
+                        ).exclude(deleted=True).select_related('applicant').values('applicant_id')
+                    team_files = File.objects.filter(applicant__in=applicants).exclude(deleted=True)
 
-                zip_filename = exports + filename + '.zip'
-                zf = zipfile.ZipFile(zip_filename, "w")
-                for f in team_files:
-                    fn = settings.UFS + '/' + str(f.afile.name)
-                    fdir, fname = os.path.split(fn)
-                    zip_path = fn
-                    zf.write(fn, fname)
-                zf.close()
-                fmsg = ' ' + str(len(team_files)) + ' files for ' + str(len(applicants)) + ' applicants zipped to <a class="alert-link" href="/s/exports/' + filename + '.zip">' + nominal + '.zip</a>.'
-                ftxt = ' ' + str(len(team_files)) + ' files for ' + str(len(applicants)) + ' applicants zipped to https://' + settings.SITE_URL + '/s/exports/' + filename + '.zip.'
-            else:
-                fmsg = ''
-                ftxt = ''
+                    zip_filename = exports + filename + '.zip'
+                    zf = zipfile.ZipFile(zip_filename, "w")
+                    for f in team_files:
+                        fn = settings.UFS + '/' + str(f.afile.name)
+                        fdir, fname = os.path.split(fn)
+                        zip_path = fn
+                        zf.write(fn, fname)
+                    zf.close()
+                    fmsg = ' ' + str(len(team_files)) + ' files for ' + str(len(applicants)) + ' applicants zipped to <a class="alert-link" href="/s/exports/' + filename + '.zip">' + nominal + '.zip</a>.'
+                    ftxt = ' ' + str(len(team_files)) + ' files for ' + str(len(applicants)) + ' applicants zipped to https://' + settings.SITE_URL + '/s/exports/' + filename + '.zip.'
+                else:
+                    fmsg = ''
+                    ftxt = ''
 
-            msg = 'Team applicant reports emailed to <strong>' + request.user.email + '</strong> and written to <a class="alert-link" href="/s/exports/' + filename + '.csv">' + nominal + '.csv</a> and <a class="alert-link" href="/s/exports/' + filename + '.json">' + nominal + '.json</a>.' + fmsg
-            txt = 'Team applicant reports emailed to ' + request.user.email + ' and written to https://' + settings.SITE_URL + '/s/exports/' + filename + '.csv and https://' + settings.SITE_URL + '/s/exports/' + filename + '.json.' + ftxt
+                msg = 'Team applicant reports emailed to <strong>' + request.user.email + '</strong> and written to <a class="alert-link" href="/s/exports/' + filename + '.csv">' + nominal + '.csv</a> and <a class="alert-link" href="/s/exports/' + filename + '.json">' + nominal + '.json</a>.' + fmsg
+                txt = 'Team applicant reports emailed to ' + request.user.email + ' and written to https://' + settings.SITE_URL + '/s/exports/' + filename + '.csv and https://' + settings.SITE_URL + '/s/exports/' + filename + '.json.' + ftxt
 
-            email = EmailMessage(
-                'icap applicant report', txt, None, [request.user.email])
-            context = { 'team_applicants': team_applicants }
-            content = render_to_string('icap/team_applicants.csv', context)
-            with open(exports + filename + '.csv', 'w') as static_file:
-                static_file.write(content)
-            email.attach_file(exports + filename + '.csv')
-            content = render_to_string('icap/team_applicants.json', context)           
-            with open(exports + filename + '.json', 'w') as static_file:
-                static_file.write(content)
-            email.attach_file(exports + filename + '.json')
-            email.send()
-            messages.info(request, msg)
-            #l = Logitem(author=request.user, status='S', message=msg, obj_model='Fire', obj_id='', obj_in='', obj_out='',)
-            #l.save()
-        #msg = 'Unit and dispatch files written.'
-        #messages.info(request, msg)
-        return HttpResponseRedirect(reverse('team_applicants', args=[team.area.slug, team.slug]))
+                email = EmailMessage(
+                    'icap applicant report', txt, None, [request.user.email])
+                context = { 'team_applicants': team_applicants }
+                content = render_to_string('icap/team_applicants.csv', context)
+                with open(exports + filename + '.csv', 'w') as static_file:
+                    static_file.write(content)
+                email.attach_file(exports + filename + '.csv')
+                content = render_to_string('icap/team_applicants.json', context)           
+                with open(exports + filename + '.json', 'w') as static_file:
+                    static_file.write(content)
+                email.attach_file(exports + filename + '.json')
+                email.send()
+                messages.info(request, msg)
+                #l = Logitem(author=request.user, status='S', message=msg, obj_model='Fire', obj_id='', obj_in='', obj_out='',)
+                #l.save()
+            #msg = 'Unit and dispatch files written.'
+            #messages.info(request, msg)
+            return HttpResponseRedirect(reverse('team_applicants', args=[team.area.slug, team.slug]))
+        else:
+            return HttpResponseRedirect(reverse('team_detail', args=[team.area.slug, team.slug]))
     else:
-        return HttpResponseRedirect(reverse('area_detail', args=[area.slug]))
+        msg = 'Log in to view team applicants.'
+        messages.info(request, msg)
+        return HttpResponseRedirect(reverse('team_detail', args=[team.area.slug, team.slug]))
 
 def ApplicationMessage(valid_application):
     a = 'applicant: ' + str(valid_application.applicant.firstname) + ' ' + str(valid_application.applicant.lastname) + ' ' + valid_application.applicant.author.email + '\n'
@@ -327,6 +347,7 @@ def TeamEmails(request, area_slug, team_slug):
                     e_admin_form = 'e_admin_' + str(app.id)
                     e_selected_form = 'e_selected_' + str(app.id)
                     mails = ()
+                    e_applied = app.e_applied
                     if e_applied_form in request.POST:
                         if request.POST[e_applied_form] and team.area.e_applied is not None:
                             e_applied = datetime.datetime.now()
@@ -336,95 +357,93 @@ def TeamEmails(request, area_slug, team_slug):
                             m = top + a + bottom
                             applied_mail = ('icap application confirmation', m, None, [app.applicant.author.email])
                             mails = mails + (applied_mail,)
-                    else:
-                        e_applied = app.e_applied
+                    e_supervisor = app.e_supervisor
+                    r_supervisor = app.r_supervisor
+                    a_supervisor = app.a_supervisor
                     if e_supervisor_form in request.POST:
                         if request.POST[e_supervisor_form] and team.area.e_supervisor is not None:
                             e_supervisor = datetime.datetime.now()
                             r_supervisor = app.applicant.supervisor_email
                             a_supervisor = '' # date of approval
-                            try:
-                                supervisor, _ = User.objects.get_or_create(email__iexact=r_supervisor, defaults={'email': r_supervisor, 'username': r_supervisor, 'is_active': True})
-                            except:
-                                supervisor = User.objects.get(email__iexact=r_supervisor)
-                                _ = False
-                            if _:
-                                send_email_confirmation(request, supervisor, True)
-                                top = 'This email is to request supervisor\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and approve or disapprove this application.\n\n'
-                            else:
-                                top = 'This email is to request supervisor\'s approval for the application below.\n\n'
-                            a = ApplicationMessage(app)
-                            bottom = '\n' + str(app.position.team.area.e_supervisor)
-                            m = top + a + bottom
-                            supervisor_mail = ('icap approval request - supervisor', m, None, [r_supervisor])
-                            mails = mails + (supervisor_mail,)
-                    else:
-                        e_supervisor = app.e_supervisor
-                        r_supervisor = app.r_supervisor
-                        a_supervisor = app.a_supervisor
+                            if r_supervisor:
+                                try:
+                                    supervisor, _ = User.objects.get_or_create(email__iexact=r_supervisor, defaults={'email': r_supervisor, 'username': r_supervisor, 'is_active': True})
+                                except:
+                                    supervisor = User.objects.get(email__iexact=r_supervisor)
+                                    _ = False
+                                if _:
+                                    send_email_confirmation(request, supervisor, True)
+                                    top = 'This email is to request supervisor\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and approve or disapprove this application.\n\n'
+                                else:
+                                    top = 'This email is to request supervisor\'s approval for the application below.\n\n'
+                                a = ApplicationMessage(app)
+                                bottom = '\n' + str(app.position.team.area.e_supervisor)
+                                m = top + a + bottom
+                                supervisor_mail = ('icap approval request - supervisor', m, None, [r_supervisor])
+                                mails = mails + (supervisor_mail,)
+                    e_training = app.e_training
+                    r_training = app.r_training
+                    a_training = app.a_training
                     if e_training_form in request.POST:
                         if request.POST[e_training_form] and team.area.e_training is not None:
                             e_training = datetime.datetime.now()
                             r_training = app.applicant.training_email
                             a_training = '' # date of approval
-                            try:
-                                training, _ = User.objects.get_or_create(email__iexact=r_training, defaults={'email': r_training, 'username': r_training, 'is_active': True})
-                            except:
-                                training = User.objects.get(email__iexact=r_training)
-                                _ = False
-                            if _:
-                                send_email_confirmation(request, training, True)
-                                top = 'This email is to request training coordinator\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and approve or disapprove this application.\n\n'
-                            else:
-                                top = 'This email is to request training coordinator\'s approval for the application below.\n\n'
-                            a = ApplicationMessage(app)
-                            bottom = '\n' + str(app.position.team.area.e_training)
-                            m = top + a + bottom
-                            training_mail = ('icap approval request - training', m, None, [r_training])
-                            mails = mails + (training_mail,)
-                    else:
-                        e_training = app.e_training
-                        r_training = app.r_training
-                        a_training = app.a_training
+                            if r_training:
+                                try:
+                                    training, _ = User.objects.get_or_create(email__iexact=r_training, defaults={'email': r_training, 'username': r_training, 'is_active': True})
+                                except:
+                                    training = User.objects.get(email__iexact=r_training)
+                                    _ = False
+                                if _:
+                                    send_email_confirmation(request, training, True)
+                                    top = 'This email is to request training coordinator\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and approve or disapprove this application.\n\n'
+                                else:
+                                    top = 'This email is to request training coordinator\'s approval for the application below.\n\n'
+                                a = ApplicationMessage(app)
+                                bottom = '\n' + str(app.position.team.area.e_training)
+                                m = top + a + bottom
+                                training_mail = ('icap approval request - training', m, None, [r_training])
+                                mails = mails + (training_mail,)
+                    e_admin = app.e_admin
+                    r_admin = app.r_admin
+                    a_admin = app.a_admin
                     if e_admin_form in request.POST:
                         if request.POST[e_admin_form] and team.area.e_admin is not None:
                             e_admin = datetime.datetime.now()
                             r_admin = app.applicant.admin_email
                             a_admin = '' # date of approval
-                            try:
-                                admin, _ = User.objects.get_or_create(email__iexact=r_admin, defaults={'email': r_admin, 'username': r_admin, 'is_active': True})
-                            except:
-                                admin = User.objects.get(email__iexact=r_admin)
-                                _ = False
-                            if _:
-                                send_email_confirmation(request, admin, True)
-                                top = 'This email is to request agency admin\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and approve or disapprove this application.\n\n'
-                            else:
-                                top = 'This email is to request agency admin\'s approval for the application below.\n\n'
-                            a = ApplicationMessage(app)
-                            bottom = '\n' + str(app.position.team.area.e_admin)
-                            m = top + a + bottom
-                            admin_mail = ('icap approval request - admin', m, None, [r_admin])
-                            mails = mails + (admin_mail,)
-                    else:
-                        e_admin = app.e_admin
-                        r_admin = app.r_admin
-                        a_admin = app.a_admin
+                            if r_admin:
+                                try:
+                                    admin, _ = User.objects.get_or_create(email__iexact=r_admin, defaults={'email': r_admin, 'username': r_admin, 'is_active': True})
+                                except:
+                                    admin = User.objects.get(email__iexact=r_admin)
+                                    _ = False
+                                if _:
+                                    send_email_confirmation(request, admin, True)
+                                    top = 'This email is to request agency admin\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and approve or disapprove this application.\n\n'
+                                else:
+                                    top = 'This email is to request agency admin\'s approval for the application below.\n\n'
+                                a = ApplicationMessage(app)
+                                bottom = '\n' + str(app.position.team.area.e_admin)
+                                m = top + a + bottom
+                                admin_mail = ('icap approval request - admin', m, None, [r_admin])
+                                mails = mails + (admin_mail,)
+                    e_selected = app.e_selected
                     if e_selected_form in request.POST:
                         if request.POST[e_selected_form] and team.area.e_selected is not None:
-                            e_selected = datetime.datetime.now()
-                            # e_status
-                            # e_status_author
-                            # statused
-                            top = 'This email is notify you of the selection status of the application below.\n\n'
-                            a = ApplicationMessage(app)
-                            a = a + 'selection status: ' + str(app.get_status_display()) + '\n'
-                            bottom = '\n' + str(app.position.team.area.e_selected)
-                            m = top + a + bottom
-                            selected_mail = ('icap selection status notification', m, None, [app.applicant.author.email])
-                            mails = mails + (selected_mail,)
-                    else:
-                        e_selected = app.e_selected
+                            if app.status:
+                                e_selected = datetime.datetime.now()
+                                # e_status
+                                # e_status_author
+                                # statused
+                                top = 'This email is notify you of the selection status of the application below.\n\n'
+                                a = ApplicationMessage(app)
+                                a = a + 'selection status: ' + str(app.get_status_display()) + '\n'
+                                bottom = '\n' + str(app.position.team.area.e_selected)
+                                m = top + a + bottom
+                                selected_mail = ('icap selection status notification', m, None, [app.applicant.author.email])
+                                mails = mails + (selected_mail,)
                     send_mass_mail(mails)
                     ok = Application.objects.filter(id=app.id).update(e_applied=e_applied, e_supervisor=e_supervisor, r_supervisor=r_supervisor, e_training=e_training, r_training=r_training, e_admin=e_admin, r_admin=r_admin, e_selected=e_selected)
 
@@ -540,7 +559,6 @@ def TeamApprovals(request, area_slug, team_slug):
 
     return render(request, 'icap/area_team_approvals.html', {'team': team, 'team_ics': team_ics, 'applications': applications,})
 
-
 def PositionDetail(request, area_slug, team_slug, position_slug):
     position = get_object_or_404(Position, Q(team__area__slug=area_slug), Q(team__slug=team_slug), slug__iexact=position_slug)
     team_ics = Application.objects.filter(
@@ -645,6 +663,9 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
             valid_application.position_id = position.id
             valid_application.applicant_id = applicant.id
             valid_application.author_id = request.user.id
+            valid_application.r_supervisor = applicant.supervisor_email
+            valid_application.r_training = applicant.training_email
+            valid_application.r_admin = applicant.admin_email
             valid_application.save()
             form.save_m2m()
             if position.team.area.e_applied and valid_application.applicant.author.email:
@@ -741,9 +762,15 @@ def ApplicantUpdate(request):
 def Approvals(request):
     if request.user.is_authenticated:
         applications = Application.objects.filter(Q(r_supervisor__iexact=request.user.email)|Q(r_training__iexact=request.user.email)|Q(r_admin__iexact=request.user.email))
+        if applications:
+            return render(request, 'icap/approvals.html', {'applications': applications,})
+        else:
+            msg = 'No approvals to set.'
+            messages.info(request, msg)
+            return HttpResponseRedirect(reverse('index'))
     else:
         msg = 'Login to set approvals.'
-        messages.success(request, msg)
+        messages.info(request, msg)
         return HttpResponseRedirect(reverse('index'))
     if request.method == "POST":
         if "approvals" in request.POST:
@@ -788,8 +815,6 @@ def Approvals(request):
         l = Logitem(author=request.user, status='S', message=msg, obj_model='Application', obj_id='', obj_in='', obj_out='',)
         l.save()
         return HttpResponseRedirect(reverse('approvals'))
-
-    return render(request, 'icap/approvals.html', {'applications': applications,})
 
 def Units(request):
     if request.user.is_superuser:

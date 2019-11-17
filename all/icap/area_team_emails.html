@@ -3,6 +3,10 @@
 {% load i18n %}
 {% load account %}
 
+{% block title %}
+<title>{{ request.site.name }}{% url 'team_emails' team.area.slug team.slug %}</title>
+{% endblock %}
+
 {% block collapse %}
 {% endblock %}
 
@@ -52,21 +56,20 @@
     <thead>
       <tr>
       <th scope="col">Date / Edited</th>
-      <th scope="col">Applicant Name</th>
-      <th scope="col">Applicant Email</th>
+      <th scope="col">Applicant</th>
       <th scope="col">Category</th>
       <th scope="col">Position</th>
       <th scope="col">Consideration</th>
       <th scope="col">Application Status</th>
-      <th scope="col">Applied <span class="float-right small"><input type="checkbox" id="sa_e_applied" name="sa_e_applied"
+      <th scope="col">Applicant Confirmation<span class="float-right small"><input type="checkbox" id="sa_e_applied" name="sa_e_applied"
             data-checkbox-id="e_applied" class="selectall" /></span></th>
-      <th scope="col">Supervisor <span class="float-right small"><input type="checkbox" id="sa_e_supervisor" name="sa_e_supervisor"
+      <th scope="col">Supervisor Approval<span class="float-right small"><input type="checkbox" id="sa_e_supervisor" name="sa_e_supervisor"
             data-checkbox-id="e_supervisor" class="selectall" /></span></th>
-      <th scope="col">Training <span class="float-right small"><input type="checkbox" id="sa_e_training" name="sa_e_training"
-            data-checkbox-id="e_training" class="selectall" /></span></th>
-      <th scope="col">Admin <span class="float-right small"><input type="checkbox" id="sa_e_admin" name="sa_e_admin"
+      <th scope="col">Admin Approval<span class="float-right small"><input type="checkbox" id="sa_e_admin" name="sa_e_admin"
             data-checkbox-id="e_admin" class="selectall" /></span></th>
-      <th scope="col">Selected <span class="float-right small"><input type="checkbox" id="sa_e_selected" name="sa_e_selected"
+      <th scope="col">Training Approval<span class="float-right small"><input type="checkbox" id="sa_e_training" name="sa_e_training"
+            data-checkbox-id="e_training" class="selectall" /></span></th>
+      <th scope="col">Selection Notice<span class="float-right small"><input type="checkbox" id="sa_e_selected" name="sa_e_selected"
             data-checkbox-id="e_selected" class="selectall" /></span></th>
       </tr>
     </thead>
@@ -74,75 +77,90 @@
   {% for a in team_applicants %}
       <tr>
         <td class='pt-0 pb-0'>{{ a.created|date:'Y-m-d' }}{% if a.modified and a.modified|date:'Y-m-d' != a.created|date:'Y-m-d' %} / {{ a.modified|date:'Y-m-d' }}{% endif %}</td>
-        <td class='pt-0 pb-0'><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.firstname|default_if_none:'--' }} {{ a.applicant.lastname|default_if_none:'--' }}</a></td>
-        <td class='pt-0 pb-0'><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.author.email }}</a></td>
+        <td class='pt-0 pb-0'><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.firstname|default_if_none:'--' }} {{ a.applicant.lastname|default_if_none:'--' }}</a><br><a href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.author.email }}</a></td>
         <td class='pt-0 pb-0'>{{ a.applicant.category }}</td>
         <td class='pt-0 pb-0'><a href="{% url 'position_detail' a.position.team.area.slug a.position.team.slug a.position.slug %}">{{ a.position.name }}</a></td>
         <td class='pt-0 pb-0'>{{ a.get_consideration_display }}</td>
         <td class='pt-0 pb-0'><mark class="alert-link p-0">{{ a.get_status_display }}</mark>{% if a.status_author and a.statused %}<span class="float-right small">{{ a.status_author}} on {{ a.statused|date:'Y-m-d'}}</span>{% endif %}</td>
         <td class='pt-0 pb-0'>
-           {% if a.e_applied %}
-           <div>
-            <small class="text-danger">{{ a.e_applied|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
-           </div>
-            {% else %}
-           <small class="text-success">{{ a.applicant.author.email|default_if_none:'--' }}</small>
-            {% endif %}
+          {% if a.e_applied %}
+           <small class="text-secondary">Sent {{ a.e_applied|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+          {% else %}
+           <small class="text-primary">Send to {{ a.applicant.author.email|default_if_none:'--' }}</small>
+          {% endif %}
           <span class="float-right small">
             <input type="hidden" name="application_{{ a.id }}" readonly value="{{ a.id }}">
             <input type="checkbox" id="e_applied" name="e_applied_{{ a.id }}" {% if not a.e_applied %}checked{% endif %}>
           </span>
         </td>
         <td class='pt-0 pb-0'>
-           {% if a.e_supervisor %}
-           <div>
-            <small class="text-danger">{{ a.r_supervisor|default_if_none:'--' }}</small><br>
-            <small class="text-danger">{{ a.e_supervisor|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
-           </div>
-            {% else %}
-           <small class="text-success">{{ a.applicant.supervisor_email|default_if_none:'--' }}</small>
-            {% endif %}
-          <span class="float-right small">
+          {% if a.e_supervisor %}
+           <small class="text-secondary">Sent {{ a.e_supervisor|date:'Y-m-d H:i'|default_if_none:'--' }}</small><br>
+           <small class="text-secondary">to {{ a.r_supervisor|default_if_none:'--' }}</small>
+          {% else %}
+           <small class="text-primary">Send to {{ a.applicant.supervisor_email|default_if_none:'--' }}</small>
+          {% endif %}
+          {% if a.approved_supervisor is True %}
+           <br><small class="text-success">Approved {{ a.a_supervisor|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+          {% elif a.approved_supervisor is False %}
+           <br><small class="text-danger">Disapproved {{ a.a_supervisor|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+          {% else %}
+          {% endif %}
+          {% if a.applicant.supervisor_email %}
+           <span class="float-right small">
             <input type="checkbox" id="e_supervisor" name="e_supervisor_{{ a.id }}" {% if not a.e_supervisor %}checked{% endif %}>
-          </span>
+           </span>
+          {% endif %}
         </td>
         <td class='pt-0 pb-0'>
-           {% if a.e_training %}
-           <div>
-            <small class="text-danger">{{ a.r_training|default_if_none:'--' }}</small><br>
-            <small class="text-danger">{{ a.e_training|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
-           </div>
-            {% else %}
-           <small class="text-success">{{ a.applicant.training_email|default_if_none:'--' }}</small>
-            {% endif %}
-          <span class="float-right small">
-            <input type="checkbox" id="e_training" name="e_training_{{ a.id }}" {% if not a.e_training %}checked{% endif %}>
-          </span>
-        </td>
-        <td class='pt-0 pb-0'>
-           {% if a.e_admin %}
-           <div>
-            <small class="text-danger">{{ a.r_admin|default_if_none:'--' }}</small><br>
-            <small class="text-danger">{{ a.e_admin|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
-           </div>
-            {% else %}
-           <small class="text-success">{{ a.applicant.admin_email|default_if_none:'--' }}</small>
-            {% endif %}
-          <span class="float-right small">
+          {% if a.e_admin %}
+           <small class="text-secondary">Sent {{ a.e_admin|date:'Y-m-d H:i'|default_if_none:'--' }}</small><br>
+           <small class="text-secondary">to {{ a.r_admin|default_if_none:'--' }}</small>
+          {% else %}
+           <small class="text-primary">Send to {{ a.applicant.admin_email|default_if_none:'--' }}</small>
+          {% endif %}
+          {% if a.approved_admin is True %}
+           <br><small class="text-success">Approved {{ a.a_admin|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+          {% elif a.approved_admin is False %}
+           <br><small class="text-danger">Disapproved {{ a.a_admin|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+          {% else %}
+          {% endif %}
+          {% if a.applicant.admin_email %}
+           <span class="float-right small">
             <input type="checkbox" id="e_admin" name="e_admin_{{ a.id }}" {% if not a.e_admin %}checked{% endif %}>
-          </span>
+           </span>
+          {% endif %}
         </td>
         <td class='pt-0 pb-0'>
-           {% if a.e_selected %}
-           <div>
-            <small class="text-danger">{{ a.e_selected|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
-           </div>
-            {% else %}
-           <small class="text-success">{{ a.applicant.author.email|default_if_none:'--' }}</small>
-            {% endif %}
-          <span class="float-right small">
+          {% if a.e_training %}
+           <small class="text-secondary">Sent {{ a.e_training|date:'Y-m-d H:i'|default_if_none:'--' }}</small><br>
+           <small class="text-secondary">to {{ a.r_training|default_if_none:'--' }}</small>
+          {% else %}
+           <small class="text-primary">Send to {{ a.applicant.training_email|default_if_none:'--' }}</small>
+          {% endif %}
+          {% if a.approved_training is True %}
+           <br><small class="text-success">Approved {{ a.a_training|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+          {% elif a.approved_training is False %}
+           <br><small class="text-danger">Disapproved {{ a.a_training|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+          {% else %}
+          {% endif %}
+          {% if a.applicant.training_email %}
+           <span class="float-right small">
+            <input type="checkbox" id="e_training" name="e_training_{{ a.id }}" {% if not a.e_training %}checked{% endif %}>
+           </span>
+          {% endif %}
+        </td>
+        <td class='pt-0 pb-0'>
+          {% if a.e_selected %}
+           <small class="text-secondary">Sent {{ a.e_selected|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+          {% else %}
+           <small class="text-primary">Send to {{ a.applicant.author.email|default_if_none:'--' }}</small>
+          {% endif %}
+          {% if a.status %}
+           <span class="float-right small">
             <input type="checkbox" id="e_selected" name="e_selected_{{ a.id }}" {% if not a.e_selected %}checked{% endif %}>
-          </span>
+           </span>
+          {% endif %}
         </td>
       </tr>
   {% endfor %}

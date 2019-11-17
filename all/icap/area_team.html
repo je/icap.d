@@ -3,6 +3,10 @@
 {% load i18n %}
 {% load account %}
 
+{% block title %}
+<title>{{ request.site.name }}{% url 'team_detail' team.area.slug team.slug %}</title>
+{% endblock %}
+
 {% block collapse %}
 {% endblock %}
 
@@ -102,10 +106,8 @@
     <tr>
       <td><a href="{% url 'position_detail' team.area.slug team.slug p.slug %}">{{ p.code }}</a></td>
       <td><a href="{% url 'position_detail' team.area.slug team.slug p.slug %}">{{ p.name }}</a></td>
-      <td class="{% if p.open_date and p.close_date %}{% if p.open_date|date:'Y-m-d' <= todays_date and p.close_date|date:'Y-m-d' >= todays_date %}font-weight-bold text-success{% endif %}{% elif team.open_date and team.close_date %}{% if team.open_date|date:'Y-m-d' <= todays_date and team.close_date|date:'Y-m-d' >= todays_date %}font-weight-bold text-success{% endif %}{% elif team.area.open_date and team.area.close_date %}
-     {% if team.area.open_date|date:'Y-m-d' <= todays_date and team.area.close_date|date:'Y-m-d' >= todays_date %}
-     font-weight-bold text-success{% endif %}{% endif %}
-    ">{% if p.open_date and p.close_date %}{{ p.open_date|date:'Y-m-d' }} to {{ p.close_date|date:'Y-m-d' }}{% elif team.open_date and team.close_date %}{{ team.open_date|date:'Y-m-d' }} to {{ team.close_date|date:'Y-m-d' }}{% elif team.area.open_date and team.area.close_date %}{{ team.area.open_date|date:'Y-m-d' }} to {{ team.area.close_date|date:'Y-m-d' }}{% else %}not specified{% endif %}</td>
+      <td class="{% if p.open_date and p.close_date %}{% if p.open_date|date:'Y-m-d' <= todays_date and p.close_date|date:'Y-m-d' >= todays_date %}font-weight-bold text-success{% endif %}{% elif team.open_date and team.close_date %}{% if team.open_date|date:'Y-m-d' <= todays_date and team.close_date|date:'Y-m-d' >= todays_date %}font-weight-bold text-success{% endif %}{% elif team.area.open_date and team.area.close_date %}{% if team.area.open_date|date:'Y-m-d' <= todays_date and team.area.close_date|date:'Y-m-d' >= todays_date %}
+     font-weight-bold text-success{% endif %}{% endif %}">{% if p.open_date and p.close_date %}{{ p.open_date|date:'Y-m-d' }} to {{ p.close_date|date:'Y-m-d' }}{% elif team.open_date and team.close_date %}{{ team.open_date|date:'Y-m-d' }} to {{ team.close_date|date:'Y-m-d' }}{% elif team.area.open_date and team.area.close_date %}{{ team.area.open_date|date:'Y-m-d' }} to {{ team.area.close_date|date:'Y-m-d' }}{% else %}not specified{% endif %}</td>
       {% if user.is_authenticated and "manage_area" in area_perms or user.is_authenticated and user.email in team_ics %}
       <td><a class="float-right" href="{% url 'position_detail' team.area.slug team.slug p.slug %}">{{ p.num_apps }}</a></td>
       <td>{% if p.primary %}{% for s in p.primary %}<a href="{% url 'applicant_detail' s %}">{{ s|default_if_none:"--" }}</a> {% endfor %}{% endif %}</td>

@@ -3,6 +3,10 @@
 {% load i18n %}
 {% load account %}
 
+{% block title %}
+<title>{{ request.site.name }}{% url 'position_detail' position.team.area.slug position.team.slug position.slug %}</title>
+{% endblock %}
+
 {% block collapse %}
 {% endblock %}
 
@@ -59,11 +63,14 @@ Applications from out-of-area are printed in <span class='text-danger'>red</span
   {% csrf_token %}
   <thead>
     <tr>
-      <th scope="col" class="align-top">Date / Edited</th>
-      <th scope="col" class="align-top">Applicant Name</th>
-      <th scope="col" class="align-top">Applicant Email</th>
-      <th scope="col" class="align-top">Consideration</th>
-      <th scope="col" >Application Status
+      <th scope="col">Date / Edited</th>
+      <th scope="col">Applicant Name</th>
+      <th scope="col">Applicant Email</th>
+      <th scope="col">Consideration</th>
+      <th scope="col">Supervisor Approval</th>
+      <th scope="col">Admin Approval</th>
+      <th scope="col">Training Approval</th>
+      <th scope="col">Application Status
         <input class="btn btn-sm btn-primary float-right ml-1 pb-1 small" type="submit" name="applications" value="Save all below">
       </th>
     </tr>
@@ -75,6 +82,117 @@ Applications from out-of-area are printed in <span class='text-danger'>red</span
       <td><a{% if a.applicant.area != a.position.team.area %} class='text-danger'{% endif %} href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.firstname|default_if_none:'--' }} {{ a.applicant.lastname|default_if_none:'--' }}</a></td>
       <td><a{% if a.applicant.area != a.position.team.area %} class='text-danger'{% endif %} href="{% url 'applicant_detail' a.applicant.author.email %}">{{ a.applicant.author.email }}</a></td>
       <td>{{ a.get_consideration_display }}{% if a.position.team != position.team %}<span class="float-right">POOL</span>{% endif %}</td>
+        <td>
+            <div>
+            <span class="float-left">
+            {% if a.a_supervisor and a.approved_supervisor is True %}
+             <small class="text-success">{{ a.r_supervisor|default_if_none:'--' }}</small>
+            {% elif a.a_supervisor and a.approved_supervisor is False %}
+             <small class="text-danger">{{ a.r_supervisor|default_if_none:'--' }}</small>
+            {% elif a.e_supervisor %}
+             <small class="">{{ a.r_supervisor|default_if_none:'--' }}</small>
+            {% else %}
+             <small class="">{{ a.r_supervisor|default_if_none:'--' }}</small>
+            {% endif %}
+            </span>
+            {% if a.r_supervisor|lower == request.user.email|lower %}
+            <span class="float-right small">
+              <input class='tgl tgl-flip' id='a_supervisor_{{ a.id }}' name='a_supervisor_{{ a.id }}' type='checkbox' autocomplete="off" {% if a.approved_supervisor is True %}checked {% endif %}>
+              <label class='tgl-btn {% if a.approved_supervisor is True %}active{% endif %}' data-tg-off='No' data-tg-on='Yes' for='a_supervisor_{{ a.id }}'></label>
+            </span>
+            {% endif %}
+            </div>
+            <div>
+            {% if a.a_supervisor and a.approved_supervisor is True %}
+            <span class="float-left small">
+             <small class="text-success">Approved {{ a.a_supervisor|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+            {% elif a.a_supervisor and a.approved_supervisor is False %}
+            <span class="float-left small">
+             <small class="text-danger">Disapproved {{ a.a_supervisor|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+            {% elif a.e_supervisor %}
+            <span class="float-left small">
+             <small class="">Requested {{ a.e_supervisor|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+            {% else %}
+            <span class="float-left small w-100">
+             <small class="">Not requested</small>
+            {% endif %}
+            </span>
+            </div>
+        </td>
+        <td>
+            <div>
+            <span class="float-left">
+            {% if a.a_admin and a.approved_admin is True %}
+             <small class="text-success">{{ a.r_admin|default_if_none:'--' }}</small>
+            {% elif a.a_admin and a.approved_admin is False %}
+             <small class="text-danger">{{ a.r_admin|default_if_none:'--' }}</small>
+            {% elif a.e_admin %}
+             <small class="">{{ a.r_admin|default_if_none:'--' }}</small>
+            {% else %}
+             <small class="">{{ a.r_admin|default_if_none:'--' }}</small>
+            {% endif %}
+            </span>
+            {% if a.r_admin|lower == request.user.email|lower %}
+            <span class="float-right small">
+              <input class='tgl tgl-flip' id='a_admin_{{ a.id }}' name='a_admin_{{ a.id }}' type='checkbox' autocomplete="off" {% if a.approved_admin is True %}checked {% endif %}>
+              <label class='tgl-btn {% if a.approved_admin is True %}active{% endif %}' data-tg-off='No' data-tg-on='Yes' for='a_admin_{{ a.id }}'></label>
+            </span>
+            {% endif %}
+            </div>
+            <div>
+            {% if a.a_admin and a.approved_admin is True %}
+            <span class="float-left small">
+             <small class="text-success">Approved {{ a.a_admin|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+            {% elif a.a_admin and a.approved_admin is False %}
+            <span class="float-left small">
+             <small class="text-danger">Disapproved {{ a.a_admin|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+            {% elif a.e_admin %}
+            <span class="float-left small">
+             <small class="">Requested {{ a.e_admin|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+            {% else %}
+            <span class="float-left small w-100">
+             <small class="">Not requested</small>
+            {% endif %}
+            </span>
+            </div>
+        </td>
+        <td>
+            <div>
+            <span class="float-left">
+            {% if a.a_training and a.approved_training is True %}
+             <small class="text-success">{{ a.r_training|default_if_none:'--' }}</small>
+            {% elif a.a_training and a.approved_training is False %}
+             <small class="text-danger">{{ a.r_training|default_if_none:'--' }}</small>
+            {% elif a.e_training %}
+             <small class="">{{ a.r_training|default_if_none:'--' }}</small>
+            {% else %}
+             <small class="">{{ a.r_training|default_if_none:'--' }}</small>
+            {% endif %}
+            </span>
+            {% if a.r_training|lower == request.user.email|lower %}
+            <span class="float-right small">
+              <input class='tgl tgl-flip' id='a_training_{{ a.id }}' name='a_training_{{ a.id }}' type='checkbox' autocomplete="off" {% if a.approved_training is True %}checked {% endif %}>
+              <label class='tgl-btn {% if a.approved_training is True %}active{% endif %}' data-tg-off='No' data-tg-on='Yes' for='a_training_{{ a.id }}'></label>
+            </span>
+            {% endif %}
+            </div>
+            <div>
+            {% if a.a_training and a.approved_training is True %}
+            <span class="float-left small">
+             <small class="text-success">Approved {{ a.a_training|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+            {% elif a.a_training and a.approved_training is False %}
+            <span class="float-left small">
+             <small class="text-danger">Disapproved {{ a.a_training|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+            {% elif a.e_training %}
+            <span class="float-left small">
+             <small class="">Requested {{ a.e_training|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+            {% else %}
+            <span class="float-left small w-100">
+             <small class="">Not requested</small>
+            {% endif %}
+            </span>
+            </div>
+        </td>
     <td class="form-inline">
       <div class="col pl-0 pr-0">
       <div class="input-group input-group-sm">

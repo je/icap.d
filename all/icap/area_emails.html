@@ -3,6 +3,10 @@
 {% load i18n %}
 {% load account %}
 
+{% block title %}
+<title>{{ request.site.name }}{% url 'area_emails' area.slug %}</title>
+{% endblock %}
+
 {% block collapse %}
 {% endblock %}
 

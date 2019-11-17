@@ -3,6 +3,10 @@
 {% load i18n %}
 {% load account %}
 
+{% block title %}
+<title>{{ request.site.name }}{% url 'area_detail' area.slug %}</title>
+{% endblock %}
+
 {% block collapse %}
 {% endblock %}
 
@@ -87,10 +91,11 @@
       </tr>
     </thead>
     <tbody>
+  {% now "Y-m-d" as todays_date %}
   {% for t in area_teams %}
       <tr>
         <td><a href="{% url 'team_detail' t.area.slug t.slug %}">{{ t.name }}</a></td>
-        <td>{% if t.open_date and t.close_date %}{{ t.open_date|date:'Y-m-d' }} to {{ t.close_date|date:'Y-m-d' }}{% elif area.open_date and area.close_date %}{{ area.open_date|date:'Y-m-d' }} to {{ area.close_date|date:'Y-m-d' }}{% else %}not specified{% endif %}</td>
+        <td class="{% if t.open_date and t.close_date %}{% if t.open_date|date:'Y-m-d' <= todays_date and t.close_date|date:'Y-m-d' >= todays_date %}font-weight-bold text-success{% endif %}{% elif t.area.open_date and t.area.close_date %}{% if t.area.open_date|date:'Y-m-d' <= todays_date and t.area.close_date|date:'Y-m-d' >= todays_date %}font-weight-bold text-success{% endif %}{% endif %}">{% if t.open_date and t.close_date %}{{ t.open_date|date:'Y-m-d' }} to {{ t.close_date|date:'Y-m-d' }}{% elif t.area.open_date and t.area.close_date %}{{ t.area.open_date|date:'Y-m-d' }} to {{ t.area.close_date|date:'Y-m-d' }}{% else %}not specified{% endif %}</td>
         </tr>
   {% endfor %}
     </tbody>

@@ -3,6 +3,10 @@
 {% load i18n %}
 {% load account %}
 
+{% block title %}
+<title>{{ request.site.name }}{% url 'applicant_detail' auser.email %}</title>
+{% endblock %}
+
 {% block collapse %}
 {% endblock %}
 
@@ -25,6 +29,10 @@ Applications for '{{ auser.email }}'
       <th scope="col">Position</th>
       <th scope="col">Consideration</th>
       <th scope="col">Application Status</th>
+      <th scope="col">Supervisor Approval</th>
+      <th scope="col">Admin Approval</th>
+      <th scope="col">Training Approval</th>
+      <th scope="col">Selection Notice</th>
     </tr>
   </thead>
   <tbody>
@@ -36,6 +44,63 @@ Applications for '{{ auser.email }}'
       <td><a href="{% url 'position_detail' a.position.team.area.slug a.position.team.slug a.position.slug %}">{{ a.position.name }}</a></td>
       <td>{{ a.get_consideration_display }}</td>
       <td><mark class="alert-link p-0">{{ a.get_status_display }}</mark>{% if a.status_author and a.statused %}<span class="float-right small">{{ a.status_author}} on {{ a.statused|date:'Y-m-d'}}</span>{% endif %}</td>
+
+        <td class='pt-0 pb-0'>
+          {% if a.r_supervisor %}
+           <small class="">{{ a.r_supervisor|default_if_none:'--' }}</small>
+           {% if a.approved_supervisor is True %}
+            <br><small class="text-success">Approved {{ a.a_supervisor|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           {% elif a.approved_supervisor is False %}
+            <br><small class="text-danger">Disapproved {{ a.a_supervisor|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           {% elif a.e_supervisor %}
+            <br><small class="">Requested {{ a.e_supervisor|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           {% else %}
+            <br><small class="">Not requested</small>
+           {% endif %}
+          {% else %}
+           <small class="">{{ a.applicant.supervisor_email|default_if_none:'--' }}</small>
+          {% endif %}
+        </td>
+        <td class='pt-0 pb-0'>
+          {% if a.r_admin %}
+           <small class="">{{ a.r_admin|default_if_none:'--' }}</small>
+           {% if a.approved_admin is True %}
+            <br><small class="text-success">Approved {{ a.a_admin|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           {% elif a.approved_admin is False %}
+            <br><small class="text-danger">Disapproved {{ a.a_admin|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           {% elif a.e_admin %}
+            <br><small class="">Requested {{ a.e_admin|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           {% else %}
+            <br><small class="">Not requested</small>
+           {% endif %}
+          {% else %}
+           <small class="">{{ a.applicant.admin_email|default_if_none:'--' }}</small>
+          {% endif %}
+        </td>
+        <td class='pt-0 pb-0'>
+          {% if a.r_training %}
+           <small class="">{{ a.r_training|default_if_none:'--' }}</small>
+           {% if a.approved_training is True %}
+            <br><small class="text-success">Approved {{ a.a_training|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           {% elif a.approved_training is False %}
+            <br><small class="text-danger">Disapproved {{ a.a_training|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           {% elif a.e_training %}
+            <br><small class="">Requested {{ a.e_training|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+           {% else %}
+            <br><small class="">Not requested</small>
+           {% endif %}
+          {% else %}
+           <small class="">{{ a.applicant.training_email|default_if_none:'--' }}</small>
+          {% endif %}
+        </td>
+        <td class='pt-0 pb-0'>
+          {% if a.e_selected %}
+           <small class="">Sent {{ a.e_selected|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
+          {% else %}
+           <small class="">Not sent</small>
+          {% endif %}
+        </td>
+
     </tr>
 {% endfor %}
   </tbody>

@@ -84,8 +84,9 @@ class ApplicantAdmin(admin.ModelAdmin):
     list_display = ('firstname', 'lastname', 'author', 'area', 'category', 'host_agency')
     list_per_page = 50
     list_filter = ('area', 'category')
-    list_display_links = ('firstname', 'lastname', 'author')
+    list_display_links = ('firstname', 'lastname', 'author', 'author__email')
     save_as = True
+    search_fields = ['author__email']
 
 admin.site.register(Applicant, ApplicantAdmin)
 
