@@ -83,7 +83,7 @@
         <td class='pt-0 pb-0'>{{ a.get_consideration_display }}</td>
         <td class='pt-0 pb-0'><mark class="alert-link p-0">{{ a.get_status_display }}</mark>{% if a.status_author and a.statused %}<span class="float-right small">{{ a.status_author}} on {{ a.statused|date:'Y-m-d'}}</span>{% endif %}</td>
         <td class='pt-0 pb-0'>
-          {% if a.e_applied %}
+          {% if a.e_applied and a.position.team.area.e_applied %}
            <small class="text-secondary">Sent {{ a.e_applied|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
           {% else %}
            <small class="text-primary">Send to {{ a.applicant.author.email|default_if_none:'--' }}</small>
@@ -106,9 +106,9 @@
            <br><small class="text-danger">Disapproved {{ a.a_supervisor|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
           {% else %}
           {% endif %}
-          {% if a.applicant.supervisor_email %}
+          {% if a.applicant.supervisor_email and a.position.team.area.e_supervisor %}
            <span class="float-right small">
-            <input type="checkbox" id="e_supervisor" name="e_supervisor_{{ a.id }}" {% if not a.e_supervisor %}checked{% endif %}>
+            <input type="checkbox" id="e_supervisor" name="e_supervisor_{{ a.id }}" {% if not a.e_supervisor and not a.a_supervisor %}checked{% endif %}>
            </span>
           {% endif %}
         </td>
@@ -125,9 +125,9 @@
            <br><small class="text-danger">Disapproved {{ a.a_admin|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
           {% else %}
           {% endif %}
-          {% if a.applicant.admin_email %}
+          {% if a.applicant.admin_email and a.position.team.area.e_admin %}
            <span class="float-right small">
-            <input type="checkbox" id="e_admin" name="e_admin_{{ a.id }}" {% if not a.e_admin %}checked{% endif %}>
+            <input type="checkbox" id="e_admin" name="e_admin_{{ a.id }}" {% if not a.e_admin and not a.a_admin %}checked{% endif %}>
            </span>
           {% endif %}
         </td>
@@ -144,19 +144,21 @@
            <br><small class="text-danger">Disapproved {{ a.a_training|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
           {% else %}
           {% endif %}
-          {% if a.applicant.training_email %}
+          {% if a.applicant.training_email and a.position.team.area.e_training %}
            <span class="float-right small">
-            <input type="checkbox" id="e_training" name="e_training_{{ a.id }}" {% if not a.e_training %}checked{% endif %}>
+            <input type="checkbox" id="e_training" name="e_training_{{ a.id }}" {% if not a.e_training and not a.a_training %}checked{% endif %}>
            </span>
           {% endif %}
         </td>
         <td class='pt-0 pb-0'>
           {% if a.e_selected %}
            <small class="text-secondary">Sent {{ a.e_selected|date:'Y-m-d H:i'|default_if_none:'--' }}</small>
-          {% else %}
+          {% elif a.status %}
            <small class="text-primary">Send to {{ a.applicant.author.email|default_if_none:'--' }}</small>
+          {% else %}
+           <small class="text-secondary">No selection</small>
           {% endif %}
-          {% if a.status %}
+          {% if a.status and a.position.team.area.e_selected %}
            <span class="float-right small">
             <input type="checkbox" id="e_selected" name="e_selected_{{ a.id }}" {% if not a.e_selected %}checked{% endif %}>
            </span>

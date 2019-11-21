@@ -96,6 +96,20 @@
         <td>--</td>
       </tr>
   {% endfor %}
+  {% if request user.is_superuser %}
+  {% for a in dup_applications %}
+      <tr>
+        <td>{{ a.created|date:'Y-m-d' }}{% if a.modified and a.modified|date:'Y-m-d' != a.created|date:'Y-m-d' %} / {{ a.modified|date:'Y-m-d' }}{% endif %}</td>
+        <td><a href="{% url 'applicant_detail' a.author.email %}">{{ a.firstname|default_if_none:'--' }} {{ a.lastname|default_if_none:'--' }}</a></td>
+        <td><a href="{% url 'applicant_detail' a.author.email %}">{{ a.author.email }}</a></td>
+        <td>{{ a.category }}</td>
+        <td><a{% if a.applicant.area != a.position.team.area %} class='text-danger'{% endif %} href="{% url 'team_detail' a.position.team.area.slug a.position.team.slug %}">{{ a.position.team }}</a></td>
+        <td><a{% if a.applicant.area != a.position.team.area %} class='text-danger'{% endif %} href="{% url 'position_detail' a.position.team.area.slug a.position.team.slug a.position.slug %}">{{ a.position.name }}</a></td>
+        <td>{{ a.get_consideration_display }}</td>
+        <td><mark class="alert-link p-0">{{ a.get_status_display }}</mark>{% if a.status_author and a.statused %}<span class="float-right small">{{ a.status_author}} on {{ a.statused|date:'Y-m-d'}}</span>{% endif %}</td>
+      </tr>
+  {% endfor %}
+  {% endif %}
     </tbody>
   </table>
   </div>

@@ -108,6 +108,40 @@
           transform: rotateY(20deg);
 }
 
+.tgl-ios + .tgl-btn {
+  background: #fbfbfb;
+  border-radius: 2em;
+  padding: 2px;
+  -webkit-transition: all .4s ease;
+  transition: all .4s ease;
+  border: 1px solid #e8eae9;
+}
+.tgl-ios + .tgl-btn:after {
+  border-radius: 2em;
+  background: #fbfbfb;
+  -webkit-transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), padding 0.3s ease, margin 0.3s ease;
+  transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), padding 0.3s ease, margin 0.3s ease;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 4px 0 rgba(0, 0, 0, 0.08);
+}
+.tgl-ios + .tgl-btn:hover:after {
+  will-change: padding;
+}
+.tgl-ios + .tgl-btn:active {
+  box-shadow: inset 0 0 0 2em #e8eae9;
+}
+.tgl-ios + .tgl-btn:active:after {
+  padding-right: .8em;
+}
+.tgl-ios:checked + .tgl-btn {
+  background: #86d993;
+}
+.tgl-ios:checked + .tgl-btn:active {
+  box-shadow: none;
+}
+.tgl-ios:checked + .tgl-btn:active:after {
+  margin-left: -.8em;
+}
+
 .tgl-d + .tgl-btn:after {
   content: attr(data-tg-on);
   color: #02C66F;
@@ -259,7 +293,7 @@
             </span>
             {% if a.r_supervisor|lower == request.user.email|lower %}
             <span class="float-right small">
-              <input class='tgl tgl-flip' id='a_supervisor_{{ a.id }}' name='a_supervisor_{{ a.id }}' type='checkbox' autocomplete="off" {% if a.approved_supervisor is True %}checked {% endif %}>
+              <input class='tgl tgl-ios' id='a_supervisor_{{ a.id }}' name='a_supervisor_{{ a.id }}' type='checkbox' autocomplete="off" {% if a.approved_supervisor is True %}checked {% endif %}>
               <label class='tgl-btn {% if a.approved_supervisor is True %}active{% endif %}' data-tg-off='No' data-tg-on='Yes' for='a_supervisor_{{ a.id }}'></label>
             </span>
             {% endif %}
@@ -296,7 +330,7 @@
             </span>
             {% if a.r_admin|lower == request.user.email|lower %}
             <span class="float-right small">
-              <input class='tgl tgl-flip' id='a_admin_{{ a.id }}' name='a_admin_{{ a.id }}' type='checkbox' autocomplete="off" {% if a.approved_admin is True %}checked {% endif %}>
+              <input class='tgl tgl-ios' id='a_admin_{{ a.id }}' name='a_admin_{{ a.id }}' type='checkbox' autocomplete="off" {% if a.approved_admin is True %}checked {% endif %}>
               <label class='tgl-btn {% if a.approved_admin is True %}active{% endif %}' data-tg-off='No' data-tg-on='Yes' for='a_admin_{{ a.id }}'></label>
             </span>
             {% endif %}
@@ -333,7 +367,7 @@
             </span>
             {% if a.r_training|lower == request.user.email|lower %}
             <span class="float-right small">
-              <input class='tgl tgl-flip' id='a_training_{{ a.id }}' name='a_training_{{ a.id }}' type='checkbox' autocomplete="off" {% if a.approved_training is True %}checked {% endif %}>
+              <input class='tgl tgl-ios' id='a_training_{{ a.id }}' name='a_training_{{ a.id }}' type='checkbox' autocomplete="off" {% if a.approved_training is True %}checked {% endif %}>
               <label class='tgl-btn {% if a.approved_training is True %}active{% endif %}' data-tg-off='No' data-tg-on='Yes' for='a_training_{{ a.id }}'></label>
             </span>
             {% endif %}

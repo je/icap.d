@@ -95,6 +95,7 @@ def AreaApplicants(request, area_slug):
                 Q(position__team__area__slug__iexact=area_slug)
                 ).exclude(deleted=True).select_related('applicant')
             no_applications = Applicant.objects.filter(area__slug__iexact=area_slug, application_applicant=None) 
+            #dup_applications = Applicant.objects.filter(area__slug__iexact=area_slug, application_applicant=None) 
             return render(request, 'icap/area_applicants.html', {'area': area_, 'area_applicants': area_applicants, 'no_applications': no_applications,})
         else:
             return HttpResponseRedirect(reverse('area_detail', args=[area_.slug]))
@@ -169,7 +170,7 @@ def TeamDetail(request, area_slug, team_slug):
     team_ics = Application.objects.filter(
         Q(position__team__slug__iexact=team_slug),
         Q(position__team__area__slug__iexact=area_slug),
-        Q(position__code__in=['IC', 'ICT1', 'ICT2']),
+        Q(position__code__in=['IC', 'ICT1', 'ICT2', 'BUYL']),
         Q(status__in=['P','A',])
         ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
     if request.method == "POST":
@@ -215,7 +216,7 @@ def TeamApplicants(request, area_slug, team_slug):
         team_ics = Application.objects.filter(
             Q(position__team__slug__iexact=team_slug),
             Q(position__team__area__slug__iexact=area_slug),
-            Q(position__code__in=['IC', 'ICT1', 'ICT2']),
+            Q(position__code__in=['IC', 'ICT1', 'ICT2', 'BUYL']),
             Q(status__in=['P','A',])
             ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
         if request.user.has_perm('icap.manage_area', team.area) or request.user.email.lower() in team_ics:
@@ -239,7 +240,7 @@ def TeamApplicantsReports(request, area_slug, team_slug, switch):
         team_ics = Application.objects.filter(
             Q(position__team__slug__iexact=team_slug),
             Q(position__team__area__slug__iexact=area_slug),
-            Q(position__code__in=['IC', 'ICT1', 'ICT2']),
+            Q(position__code__in=['IC', 'ICT1', 'ICT2', 'BUYL']),
             Q(status__in=['P','A',])
             ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
         if request.user.has_perm('icap.manage_area', team.area) or request.user.email.lower() in team_ics:
@@ -301,7 +302,7 @@ def TeamApplicantsReports(request, area_slug, team_slug, switch):
     else:
         msg = 'Log in to view team applicants.'
         messages.info(request, msg)
-        return HttpResponseRedirect(reverse('team_detail', args=[team.area.slug, team.slug]))
+        return HttpResponseRedirect(reverse('team_detail', args=[area_slug, team_slug]))
 
 def ApplicationMessage(valid_application):
     a = 'applicant: ' + str(valid_application.applicant.firstname) + ' ' + str(valid_application.applicant.lastname) + ' ' + valid_application.applicant.author.email + '\n'
@@ -330,7 +331,7 @@ def TeamEmails(request, area_slug, team_slug):
     team_ics = Application.objects.filter(
         Q(position__team__slug__iexact=team_slug),
         Q(position__team__area__slug__iexact=area_slug),
-        Q(position__code__in=['IC', 'ICT1', 'ICT2']),
+        Q(position__code__in=['IC', 'ICT1', 'ICT2', 'BUYL']),
         Q(status__in=['P','A',])
         ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
     team_applicants = Application.objects.filter(
@@ -349,7 +350,7 @@ def TeamEmails(request, area_slug, team_slug):
                     mails = ()
                     e_applied = app.e_applied
                     if e_applied_form in request.POST:
-                        if request.POST[e_applied_form] and team.area.e_applied is not None:
+                        if request.POST[e_applied_form] and team.area.e_applied:
                             e_applied = datetime.datetime.now()
                             top = 'This email is to confirm your application to the positon below.\n\n'
                             a = ApplicationMessage(app)
@@ -361,7 +362,7 @@ def TeamEmails(request, area_slug, team_slug):
                     r_supervisor = app.r_supervisor
                     a_supervisor = app.a_supervisor
                     if e_supervisor_form in request.POST:
-                        if request.POST[e_supervisor_form] and team.area.e_supervisor is not None:
+                        if request.POST[e_supervisor_form] and team.area.e_supervisor:
                             e_supervisor = datetime.datetime.now()
                             r_supervisor = app.applicant.supervisor_email
                             a_supervisor = '' # date of approval
@@ -373,9 +374,9 @@ def TeamEmails(request, area_slug, team_slug):
                                     _ = False
                                 if _:
                                     send_email_confirmation(request, supervisor, True)
-                                    top = 'This email is to request supervisor\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and approve or disapprove this application.\n\n'
+                                    top = 'This email is to request supervisor\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and login at https:' + settings.SITE_URL + ' to approve or disapprove this application. If you have been misidentified as supervisor, please forward this email to ' + settings.SERVER_EMAIL + '\n\n'
                                 else:
-                                    top = 'This email is to request supervisor\'s approval for the application below.\n\n'
+                                    top = 'This email is to request supervisor\'s approval for the application below. Please login at https:' + settings.SITE_URL + ' to approve or disapprove this application. If you have been misidentified as supervisor, please forward this email to ' + settings.SERVER_EMAIL + '\n\n'
                                 a = ApplicationMessage(app)
                                 bottom = '\n' + str(app.position.team.area.e_supervisor)
                                 m = top + a + bottom
@@ -385,7 +386,7 @@ def TeamEmails(request, area_slug, team_slug):
                     r_training = app.r_training
                     a_training = app.a_training
                     if e_training_form in request.POST:
-                        if request.POST[e_training_form] and team.area.e_training is not None:
+                        if request.POST[e_training_form] and team.area.e_training:
                             e_training = datetime.datetime.now()
                             r_training = app.applicant.training_email
                             a_training = '' # date of approval
@@ -397,9 +398,9 @@ def TeamEmails(request, area_slug, team_slug):
                                     _ = False
                                 if _:
                                     send_email_confirmation(request, training, True)
-                                    top = 'This email is to request training coordinator\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and approve or disapprove this application.\n\n'
+                                    top = 'This email is to request training coordinator\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and login at https:' + settings.SITE_URL + ' to approve or disapprove this application. If you have been misidentified as training coordinator, please forward this email to ' + settings.SERVER_EMAIL + '\n\n'
                                 else:
-                                    top = 'This email is to request training coordinator\'s approval for the application below.\n\n'
+                                    top = 'This email is to request training coordinator\'s approval for the application below. Please login at https:' + settings.SITE_URL + ' to approve or disapprove this application. If you have been misidentified as training coordinator, please forward this email to ' + settings.SERVER_EMAIL + '\n\n'
                                 a = ApplicationMessage(app)
                                 bottom = '\n' + str(app.position.team.area.e_training)
                                 m = top + a + bottom
@@ -409,7 +410,7 @@ def TeamEmails(request, area_slug, team_slug):
                     r_admin = app.r_admin
                     a_admin = app.a_admin
                     if e_admin_form in request.POST:
-                        if request.POST[e_admin_form] and team.area.e_admin is not None:
+                        if request.POST[e_admin_form] and team.area.e_admin:
                             e_admin = datetime.datetime.now()
                             r_admin = app.applicant.admin_email
                             a_admin = '' # date of approval
@@ -421,9 +422,9 @@ def TeamEmails(request, area_slug, team_slug):
                                     _ = False
                                 if _:
                                     send_email_confirmation(request, admin, True)
-                                    top = 'This email is to request agency admin\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and approve or disapprove this application.\n\n'
+                                    top = 'This email is to request agency admin\'s approval for the application below. You will receive an account confirmation in a separate email; please confirm your email and login at https:' + settings.SITE_URL + ' to approve or disapprove this application. If you have been misidentified as agency administrator, please forward this email to ' + settings.SERVER_EMAIL + '\n\n'
                                 else:
-                                    top = 'This email is to request agency admin\'s approval for the application below.\n\n'
+                                    top = 'This email is to request agency admin\'s approval for the application below. Please login at https:' + settings.SITE_URL + ' to approve or disapprove this application. If you have been misidentified as agency administrator, please forward this email to ' + settings.SERVER_EMAIL + '\n\n'
                                 a = ApplicationMessage(app)
                                 bottom = '\n' + str(app.position.team.area.e_admin)
                                 m = top + a + bottom
@@ -431,7 +432,7 @@ def TeamEmails(request, area_slug, team_slug):
                                 mails = mails + (admin_mail,)
                     e_selected = app.e_selected
                     if e_selected_form in request.POST:
-                        if request.POST[e_selected_form] and team.area.e_selected is not None:
+                        if request.POST[e_selected_form] and team.area.e_selected:
                             if app.status:
                                 e_selected = datetime.datetime.now()
                                 # e_status
@@ -501,7 +502,7 @@ def TeamApprovals(request, area_slug, team_slug):
     team_ics = Application.objects.filter(
         Q(position__team__slug__iexact=team_slug),
         Q(position__team__area__slug__iexact=area_slug),
-        Q(position__code__in=['IC', 'ICT1', 'ICT2']),
+        Q(position__code__in=['IC', 'ICT1', 'ICT2', 'BUYL']),
         Q(status__in=['P','A',])
         ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
     if request.user.has_perm('icap.manage_area', team.area) or request.user.email.lower() in team_ics:
@@ -564,7 +565,7 @@ def PositionDetail(request, area_slug, team_slug, position_slug):
     team_ics = Application.objects.filter(
         Q(position__team__slug__iexact=team_slug),
         Q(position__team__area__slug__iexact=area_slug),
-        Q(position__code__in=['IC', 'ICT1', 'ICT2']),
+        Q(position__code__in=['IC', 'ICT1', 'ICT2', 'BUYL']),
         Q(status__in=['P','A',])
         ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
     position_applications = Application.objects.filter(
@@ -718,7 +719,7 @@ def ApplicantDetail(request, applicant_user_email):
     applicant_ics = Application.objects.filter(
         Q(position__team__in=applicant_teams),
         #Q(position__team__area__slug__iexact=area_slug),
-        Q(position__code__in=['IC', 'ICT1', 'ICT2']),
+        Q(position__code__in=['IC', 'ICT1', 'ICT2', 'BUYL']),
         Q(status__in=['P','A',])
         ).exclude(deleted=True).select_related('applicant').values_list(Lower('author__email'), flat=True).distinct()
     return render(request,'icap/applicant.html', {'auser': auser, 'applicant': applicant, 'applicant_applications': applicant_applications, 'applicant_teams': applicant_teams, 'applicant_ics': applicant_ics})
@@ -763,6 +764,48 @@ def Approvals(request):
     if request.user.is_authenticated:
         applications = Application.objects.filter(Q(r_supervisor__iexact=request.user.email)|Q(r_training__iexact=request.user.email)|Q(r_admin__iexact=request.user.email))
         if applications:
+            if request.method == "POST":
+                if "approvals" in request.POST:
+                    for app in applications:
+                        a_supervisor_form = 'a_supervisor_' + str(app.id)
+                        a_training_form = 'a_training_' + str(app.id)
+                        a_admin_form = 'a_admin_' + str(app.id)
+                        if a_supervisor_form in request.POST:
+                            if request.POST[a_supervisor_form] and app.r_supervisor.lower() == request.user.email.lower():
+                                a_supervisor = datetime.datetime.now()
+                                approved_supervisor = True # request.POST[a_supervisor_form]
+                        elif app.r_supervisor.lower() == request.user.email.lower():
+                            a_supervisor = datetime.datetime.now()
+                            approved_supervisor = False # request.POST[a_supervisor_form]
+                        else:
+                            a_supervisor = app.a_supervisor
+                            approved_supervisor = app.approved_supervisor
+                        if a_training_form in request.POST:
+                            if request.POST[a_training_form] and app.r_training.lower() == request.user.email.lower():
+                                a_training = datetime.datetime.now()
+                                approved_training = True # request.POST[a_training_form]
+                        elif app.r_training.lower() == request.user.email.lower():
+                            a_training = datetime.datetime.now()
+                            approved_training = False # request.POST[a_training_form]
+                        else:
+                            a_training = app.a_training
+                            approved_training = app.approved_training
+                        if a_admin_form in request.POST:
+                            if request.POST[a_admin_form] and app.r_admin.lower() == request.user.email.lower():
+                                a_admin = datetime.datetime.now()
+                                approved_admin = True # request.POST[a_training_form]
+                        elif app.r_admin.lower() == request.user.email.lower():
+                            a_admin = datetime.datetime.now()
+                            approved_admin = False # request.POST[a_training_form]
+                        else:
+                            a_admin = app.a_admin
+                            approved_admin = app.approved_admin
+                        ok = Application.objects.filter(id=app.id).update(a_supervisor=a_supervisor, approved_supervisor=approved_supervisor, a_training=a_training, approved_training=approved_training, a_admin=a_admin, approved_admin=approved_admin,)
+                msg = 'Application approvals set by %s.' % (request.user.email)
+                messages.success(request, msg)
+                l = Logitem(author=request.user, status='S', message=msg, obj_model='Application', obj_id='', obj_in='', obj_out='',)
+                l.save()
+                return HttpResponseRedirect(reverse('approvals'))
             return render(request, 'icap/approvals.html', {'applications': applications,})
         else:
             msg = 'No approvals to set.'
@@ -772,49 +815,6 @@ def Approvals(request):
         msg = 'Login to set approvals.'
         messages.info(request, msg)
         return HttpResponseRedirect(reverse('index'))
-    if request.method == "POST":
-        if "approvals" in request.POST:
-            for app in applications:
-                a_supervisor_form = 'a_supervisor_' + str(app.id)
-                a_training_form = 'a_training_' + str(app.id)
-                a_admin_form = 'a_admin_' + str(app.id)
-                if a_supervisor_form in request.POST:
-                    if request.POST[a_supervisor_form] and app.r_supervisor.lower() == request.user.email.lower():
-                        a_supervisor = datetime.datetime.now()
-                        approved_supervisor = True # request.POST[a_supervisor_form]
-                elif app.r_supervisor.lower() == request.user.email.lower():
-                    a_supervisor = datetime.datetime.now()
-                    approved_supervisor = False # request.POST[a_supervisor_form]
-                else:
-                    a_supervisor = app.a_supervisor
-                    approved_supervisor = app.approved_supervisor
-                if a_training_form in request.POST:
-                    if request.POST[a_training_form] and app.r_training.lower() == request.user.email.lower():
-                        a_training = datetime.datetime.now()
-                        approved_training = True # request.POST[a_training_form]
-                elif app.r_training.lower() == request.user.email.lower():
-                    a_training = datetime.datetime.now()
-                    approved_training = False # request.POST[a_training_form]
-                else:
-                    a_training = app.a_training
-                    approved_training = app.approved_training
-                if a_admin_form in request.POST:
-                    if request.POST[a_admin_form] and app.r_admin.lower() == request.user.email.lower():
-                        a_admin = datetime.datetime.now()
-                        approved_admin = True # request.POST[a_training_form]
-                elif app.r_admin.lower() == request.user.email.lower():
-                    a_admin = datetime.datetime.now()
-                    approved_admin = False # request.POST[a_training_form]
-                else:
-                    a_admin = app.a_admin
-                    approved_admin = app.approved_admin
-                ok = Application.objects.filter(id=app.id).update(a_supervisor=a_supervisor, approved_supervisor=approved_supervisor, a_training=a_training, approved_training=approved_training, a_admin=a_admin, approved_admin=approved_admin,)
-
-        msg = 'Application approvals set by %s.' % (request.user.email)
-        messages.success(request, msg)
-        l = Logitem(author=request.user, status='S', message=msg, obj_model='Application', obj_id='', obj_in='', obj_out='',)
-        l.save()
-        return HttpResponseRedirect(reverse('approvals'))
 
 def Units(request):
     if request.user.is_superuser:
